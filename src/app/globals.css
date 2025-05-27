@@ -32,3 +32,6 @@ body {
   grid-template-columns: minmax(64px, 1fr) minmax(auto, 1100px) minmax(64px, 1fr);
 }
 
+.font-inter {
+  font-family: var(--font-inter);
+}

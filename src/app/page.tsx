@@ -24,7 +24,7 @@ export default function Dashboard() {
           <div className="flex flex-col lg:border lg:border-solid lg:border-[#E4E6EB] rounded-3xl relative lg:bg-[#fbfbfb] lg:py-4 col-start-1 col-end-4">
             {/* Header */}
             <header className="flex justify-between items-center mb-6 border-b border-solid border-[#E4E6EB] pb-4 px-4">
-              <Image src="/finova-logo.svg" alt="dashboard" width={150} height={100} className="w-24 md:w-[150px] " />
+              <Image src="/finova-logo.svg" alt="dashboard" width={150} height={100} className="w-24 md:w-[150px]" />
               <div className="text-right">
                 <p className="text-xs md:text-sm text-gray-600 ">
                   {formattedTime} ({timeZone})
@@ -34,7 +34,7 @@ export default function Dashboard() {
             </header>
             <div className="flex justify-between md:items-center gap-6 flex-col md:flex-row px-4 relative">
                 <div className="flex flex-col border border-[#6BE264] rounded-xl overflow-hidden">
-                  <Image src="/Finova.png" alt="dashboard" width={600} height={100} />
+                  <Image src="/Finova.png" alt="dashboard" width={600} height={200} objectFit="cover"/>
                 </div>
                 <div className="flex flex-col">
                   <h2 className="text-2xl font-bold">Welcome back, John Doe</h2>
