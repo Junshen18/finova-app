@@ -1,30 +1,41 @@
+"use client";
 import Image from "next/image";
-
+import Link from "next/link";
+import React, { useState } from "react";
+import PlatformModal from "@/components/platform-modal";
+import { FaArrowRight } from "react-icons/fa6";
 
 export default function Home() {
+  const [modalOpen, setModalOpen] = useState(false);
+
   return (
     <div className="min-h-screen">
       {/* Header */}
       <header className="fixed w-full top-0 z-50 bg-transparent backdrop-blur-md ">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-[70px] md:h-[90px]">
-            {/* Logo */}
-            <Image src="/finova-logo.svg" alt="Logo" width={185} height={42} className="w-[100px] h-[25px] md:w-[185px] md:h-[42px] object-contain cursor-pointer"/>
-
-            {/* Desktop Navigation */}
-            <div className="hidden sm:flex sm:items-center sm:space-x-8 font-[inter] font-medium text-base">
-              <a href="#" className="text-gray-600 hover:text-gray-900">
-                Features
-              </a>
-              <a href="#" className="text-gray-600 hover:text-gray-900">
-                How it works
-              </a>
-              <a href="#" className="text-gray-600 hover:text-gray-900">
-                Testimonials
-              </a>
-              <a href="#" className="text-gray-600 hover:text-gray-900">
-                FAQs
-              </a>
+              {/* Logo */}
+              <Image src="/finova-logo.svg" alt="Logo" width={185} height={42} className="w-[100px] h-[25px] md:w-[150px] md:h-[30px] object-contain cursor-pointer"/>
+              {/* Desktop Navigation */}
+              <div className="hidden sm:flex sm:items-center sm:space-x-8 font-[inter] font-medium text-base">
+                <a href="#" className="text-gray-600 hover:text-gray-900">
+                  Features
+                </a>
+                <a href="#" className="text-gray-600 hover:text-gray-900">
+                  How it works
+                </a>
+                <a href="#" className="text-gray-600 hover:text-gray-900">
+                  Testimonials
+                </a>
+                <a href="#" className="text-gray-600 hover:text-gray-900">
+                  FAQs
+                </a>
+              </div>
+            <div className="flex items-center gap-6">
+              <div className="flex gap-2">
+                <Link href="/auth/login" className="bg-zinc-100 hover:bg-zinc-200 transition-all duration-200 text-black px-4 py-1 rounded-4xl whitespace-nowrap font-medium">Log In</Link>
+                <button className="bg-black hover:bg-black/80 transition-all duration-200 text-white px-4 py-1 rounded-4xl whitespace-nowrap font-medium cursor-pointer" onClick={() => setModalOpen(true)}>Get Started</button>
+              </div>
             </div>
 
             {/* Mobile menu button */}
@@ -54,15 +65,15 @@ export default function Home() {
               A smarter way to manage your money—track, split, and analyze your expenses effortlessly.
               </p>
 
-              <div className="rounded-full bg-black px-6 py-3 w-[150px] h-[40px] md:w-[200px] md:h-[50px] font-medium text-[14px] md:text-lg font-[inter] text-white cursor-pointer flex items-center justify-center">
-                Get Started
+              <div className="rounded-full bg-black hover:bg-black/80 transition-all duration-200 px-6 py-3 h-[40px] md:h-[50px] font-medium text-[14px] md:text-lg font-[inter] text-white cursor-pointer flex items-center justify-center gap-3">
+                <p>Get into Whitelist</p> <FaArrowRight />
               </div>
             </div>
           </div>
         </section>
 
         {/* Features Section */}
-        <section className="py-24 bg-gray-50">
+        <section className="py-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
               <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl font-[grifterbold]">
@@ -133,7 +144,7 @@ export default function Home() {
         </section> */}
 
         {/* Footer */}
-        <footer className="bg-gray-50 py-12">
+        <footer className="py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center text-gray-500">
               <p>© 2025 Finova. All rights reserved.</p>
@@ -141,6 +152,7 @@ export default function Home() {
           </div>
         </footer>
       </div>
+      <PlatformModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
   );
 }
