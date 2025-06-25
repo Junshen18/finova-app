@@ -1,11 +1,21 @@
 import { ForgotPasswordForm } from "@/components/forgot-password-form";
+import Image from "next/image";
 
 export default function Page() {
   return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm">
+    <div className="bg-white flex min-h-svh w-full items-center justify-center p-6 md:p-10">
+      <div className="w-full max-w-sm mx-auto flex flex-col items-center justify-center gap-3">
+        <Image src="/finova-logo.svg" alt="Finova" width={200} height={100} />
+        <p className="text-zinc-800 text-center mb-6">Reset Your Password</p>
         <ForgotPasswordForm />
       </div>
+      <div className="absolute bottom-10 flex gap-2 mt-8 text-xs text-gray-400">
+          <a href="#" className="hover:underline">Developers</a>
+          <span>·</span>
+          <a href="#" className="hover:underline">Privacy</a>
+          <span>·</span>
+          <a href="#" className="hover:underline">Terms</a>
+        </div>
     </div>
   );
 }

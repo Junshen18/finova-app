@@ -22,7 +22,18 @@ export function ForgotPasswordForm({
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [emailValid, setEmailValid] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  function validateEmail(email: string) {
+    return /^[^\s@]+@[^\s@]+\.com$/.test(email);
+  }
+
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value;
+    setEmail(value);
+    setEmailValid(validateEmail(value));
+  }
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,49 +56,41 @@ export function ForgotPasswordForm({
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn("flex flex-col gap-6 text-black w-full", className)} {...props}>
       {success ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Check Your Email</CardTitle>
-            <CardDescription>Password reset instructions sent</CardDescription>
-          </CardHeader>
-          <CardContent>
+          <div>
+            <h1 className="text-2xl">Check Your Email</h1>
+            <div>Password reset instructions sent</div>
+
             <p className="text-sm text-muted-foreground">
               If you registered using your email and password, you will receive
               a password reset email.
             </p>
-          </CardContent>
-        </Card>
+          </div>
+
       ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Reset Your Password</CardTitle>
-            <CardDescription>
-              Type in your email and we&apos;ll send you a link to reset your
-              password
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+          <div>
             <form onSubmit={handleForgotPassword}>
-              <div className="flex flex-col gap-6">
+              <div className="flex flex-col">
                 <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
+                  <input
                     id="email"
                     type="email"
                     placeholder="m@example.com"
                     required
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={handleInputChange}
+                    className="w-full mb-4 h-12 px-4 py-3 rounded-xl font-medium bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 text-gray-800 placeholder-gray-300 transition"
                   />
                 </div>
                 {error && <p className="text-sm text-red-500">{error}</p>}
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Sending..." : "Send reset email"}
-                </Button>
+                {emailValid ? (
+            <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-3 font-semibold transition cursor-pointer" type="submit">Continue</Button>
+              ) : (
+                <p className="text-xs text-gray-400 text-center">Please enter a valid email address.</p>
+              )}
               </div>
-              <div className="mt-4 text-center text-sm">
+              <div className="mt-4 text-center text-sm text-zinc-500">
                 Already have an account?{" "}
                 <Link
                   href="/auth/login"
@@ -97,8 +100,8 @@ export function ForgotPasswordForm({
                 </Link>
               </div>
             </form>
-          </CardContent>
-        </Card>
+            
+            </div>
       )}
     </div>
   );

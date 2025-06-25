@@ -5,11 +5,20 @@ export default function Page() {
   return (
     <div className="bg-white flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm mx-auto flex flex-col items-center justify-center gap-3">
+
         <Image src="/finova-logo.svg" alt="Finova" width={200} height={100} />
-        <p className="text-zinc-500 text-center mb-6">Log in or sign up to get started.</p>
+        <p className="text-zinc-800 text-center mb-6">Log in or sign up to get started.</p>
 
         <LoginForm />
       </div>
+      {/* Footer Links */}
+      <div className="absolute bottom-10 flex gap-2 mt-8 text-xs text-gray-400">
+          <a href="#" className="hover:underline">Developers</a>
+          <span>·</span>
+          <a href="#" className="hover:underline">Privacy</a>
+          <span>·</span>
+          <a href="#" className="hover:underline">Terms</a>
+        </div>
     </div>
   );
 }
