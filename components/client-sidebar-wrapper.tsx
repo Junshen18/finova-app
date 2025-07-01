@@ -1,5 +1,5 @@
 "use client";
-import Sidebar from "./Sidebar";
+import Sidebar from "./side-bar";
 
 export default function ClientSidebarWrapper() {
   return <Sidebar />;

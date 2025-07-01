@@ -5,7 +5,7 @@ import { getCurrentUserProfile } from "@/lib/supabase/profiles";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ProfileName } from "@/components/profile-name";
-import ClientSidebarWrapper from "@/components/ClientSidebarWrapper";
+import ClientSidebarWrapper from "@/components/client-sidebar-wrapper";
 
 export default async function ProtectedLayout({
   children,
