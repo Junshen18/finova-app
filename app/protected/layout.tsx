@@ -5,7 +5,7 @@ import { getCurrentUserProfile } from "@/lib/supabase/profiles";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ProfileName } from "@/components/profile-name";
-import Sidebar from "@/components/Sidebar";
+import ClientSidebarWrapper from "@/components/ClientSidebarWrapper";
 
 export default async function ProtectedLayout({
   children,
@@ -22,7 +22,7 @@ export default async function ProtectedLayout({
   return (
     <main className="min-h-screen flex flex-col">
       <div className="flex-1 w-full flex flex-row ">
-        <Sidebar />
+        <ClientSidebarWrapper />
         <div className="flex-1 flex flex-col w-full h-screen">
           {children}
         </div>

@@ -1,8 +1,11 @@
+"use client";
 import Link from "next/link";
 import { UserCircleIcon, HomeIcon, ListBulletIcon, PlusCircleIcon, Cog6ToothIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
+import { useProfile } from "@/hooks/useProfile";
 
 export default function Sidebar() {
+  const { profile } = useProfile();
   return (
     <aside className="w-64 bg-white border-r border-gray-200 flex flex-col justify-between px-4 shadow-lg h-screen ">
       <div>
@@ -36,7 +39,7 @@ export default function Sidebar() {
       </div>
       <div className="flex items-center gap-2 px-2">
         <UserCircleIcon className="h-8 w-8 text-gray-400" />
-        <span className="text-gray-600 py-4">Your Name</span>
+        <span className="text-gray-600 py-4">{profile?.display_name}</span>
       </div>
     </aside>
   );
