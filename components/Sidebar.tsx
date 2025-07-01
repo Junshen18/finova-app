@@ -4,9 +4,9 @@ import Image from "next/image";
 
 export default function Sidebar() {
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col justify-between py-6 px-4 shadow-lg min-h-screen">
+    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col justify-between px-4 shadow-lg h-screen ">
       <div>
-        <div className="flex items-center gap-2 mb-8 px-2">
+        <div className="flex items-center gap-2 mb-8 px-2 py-4">
         <Image
                 src="/finova-logo.svg"
                 alt="dashboard"
@@ -36,7 +36,7 @@ export default function Sidebar() {
       </div>
       <div className="flex items-center gap-2 px-2">
         <UserCircleIcon className="h-8 w-8 text-gray-400" />
-        <span className="text-gray-600">Your Name</span>
+        <span className="text-gray-600 py-4">Your Name</span>
       </div>
     </aside>
   );

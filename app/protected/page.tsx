@@ -2,8 +2,11 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { InfoIcon, Sidebar } from "lucide-react";
 import Image from "next/image";
+import { getCurrentUserProfile } from "@/lib/supabase/profiles";
 
 export default async function ProtectedPage() {
+  const profile = await getCurrentUserProfile();
+  console.log(profile);
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.getUser();
@@ -26,7 +29,7 @@ export default async function ProtectedPage() {
 
   return (
     <div className="flex min-h-screen bg-gray-50 text-black">
-      <Sidebar />
+
       {/* Main content */}
       <div className="flex-1 section p-4 sm:p-8 pb-20 sm:pb-8 overflow-y-auto">
         <div className="flex flex-col xl:flex-row gap-0 relative max-w-full !col-start-1 !col-end-4 lg:!col-start-2 lg:!col-end-3">
@@ -60,7 +63,7 @@ export default async function ProtectedPage() {
                   />
                 </div>
                 <div className="flex flex-col">
-                  <h2 className="text-2xl font-bold">Welcome back, John Doe</h2>
+                  <h2 className="text-2xl font-bold">Welcome back, {profile?.display_name}</h2>
                   <p className="text-sm text-gray-600">
                     Your dashboard is ready to help you manage your finances.
                   </p>
