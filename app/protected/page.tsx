@@ -1,127 +1,52 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { InfoIcon, Sidebar } from "lucide-react";
-import Image from "next/image";
 import { getCurrentUserProfile } from "@/lib/supabase/profiles";
+import { FaRegBell, FaFire } from "react-icons/fa6";
+import SplitText from "@/components/ui/split-text";
+import BalanceCard from "@/components/balance-card";
 
 export default async function ProtectedPage() {
-  const profile = await getCurrentUserProfile();
-  console.log(profile);
   const supabase = await createClient();
-
+  const profile = await getCurrentUserProfile();
   const { data, error } = await supabase.auth.getUser();
   if (error || !data?.user) {
     redirect("/auth/login");
   }
 
-  const now = new Date();
-  const formattedTime = now.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const formattedDate = now.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-
   return (
-    <div className="flex min-h-screen bg-gray-50 text-black">
-
-      {/* Main content */}
-      <div className="flex-1 section p-4 sm:p-8 pb-20 sm:pb-8 overflow-y-auto">
-        <div className="flex flex-col xl:flex-row gap-0 relative max-w-full !col-start-1 !col-end-4 lg:!col-start-2 lg:!col-end-3">
-          <div className="flex flex-col lg:border lg:border-solid lg:border-[#E4E6EB] rounded-3xl relative lg:bg-[#fbfbfb] lg:py-4 col-start-1 col-end-4">
-            {/* Header */}
-            <header className="flex justify-between items-center mb-6 border-b border-solid border-[#E4E6EB] pb-4 px-4">
-              <Image
-                src="/finova-logo.svg"
-                alt="dashboard"
-                width={150}
-                height={100}
-                className="w-24 md:w-[150px]"
-              />
-              <div className="text-right">
-                <p className="text-xs md:text-sm text-gray-600 ">
-                  {formattedTime} ({timeZone})
-                </p>
-                <p className="text-xs text-gray-500">{formattedDate}</p>
-              </div>
-            </header>
-
-            <div className="flex flex-col gap-6">
-              <div className="flex justify-between md:items-center gap-6 flex-col md:flex-row px-4 relative">
-                <div className="flex flex-col border border-[#6BE264] rounded-xl overflow-hidden">
-                  <Image
-                    src="/Finova.png"
-                    alt="dashboard"
-                    width={600}
-                    height={200}
-                    objectFit="cover"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <h2 className="text-2xl font-bold">Welcome back, {profile?.display_name}</h2>
-                  <p className="text-sm text-gray-600">
-                    Your dashboard is ready to help you manage your finances.
-                  </p>
-                </div>
-              </div>
-              <div className="flex md:items-center gap-6 flex-col md:flex-row px-4 relative">
-                <div className="flex flex-col border border-[#6BE264] rounded-xl overflow-hidden">
-                  <Image
-                    src="/Finova.png"
-                    alt="dashboard"
-                    width={600}
-                    height={200}
-                    objectFit="cover"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <h2 className="text-2xl font-bold">Welcome back, John Doe</h2>
-                  <p className="text-sm text-gray-600">
-                    Your dashboard is ready to help you manage your finances.
-                  </p>
-                </div>
-              </div>
-              <div className="flex justify-between md:items-center gap-6 flex-col md:flex-row px-4 relative">
-                <div className="flex flex-col border border-[#6BE264] rounded-xl overflow-hidden">
-                  <Image
-                    src="/Finova.png"
-                    alt="dashboard"
-                    width={600}
-                    height={200}
-                    objectFit="cover"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <h2 className="text-2xl font-bold">Welcome back, John Doe</h2>
-                  <p className="text-sm text-gray-600">
-                    Your dashboard is ready to help you manage your finances.
-                  </p>
-                </div>
-              </div>
-              <div className="flex justify-between md:items-center gap-6 flex-col md:flex-row px-4 relative">
-                <div className="flex flex-col border border-[#6BE264] rounded-xl overflow-hidden">
-                  <Image
-                    src="/Finova.png"
-                    alt="dashboard"
-                    width={600}
-                    height={200}
-                    objectFit="cover"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <h2 className="text-2xl font-bold">Welcome back, John Doe</h2>
-                  <p className="text-sm text-gray-600">
-                    Your dashboard is ready to help you manage your finances.
-                  </p>
-                </div>
-              </div>
+    <div className="flex min-h-screen bg-background text-foreground pt-6 px-4">
+      <div className="flex flex-col items-center justify-start w-full h-full gap-5">
+        <div className="flex flex-row items-center justify-between w-full">
+          <div className="flex flex-col items-start justify-center w-full">
+            <div>
+              <h1 className="text-sm font-medium opacity-70">Good Morning,</h1>
+            </div>
+            <SplitText
+              text={`${profile?.display_name}.`}
+              className="text-xl font-semibold text-center"
+              delay={100}
+              duration={0.3}
+              ease="power3.out"
+              splitType="chars"
+              from={{ opacity: 0, y: 40 }}
+              to={{ opacity: 1, y: 0 }}
+              threshold={0.1}
+              rootMargin="-100px"
+              textAlign="center"
+            />
+          </div>
+          <div className="flex flex-row items-center justify-end w-full gap-2 px-2">
+            <div className="bg-foreground/10 rounded-lg p-2 flex flex-row items-center justify-center gap-1">
+              <FaFire className="text-orange-400 text-lg cursor-pointer" />
+              <div className="text-sm font-semibold text-orange-300">6</div>
+            </div>
+            <div className="bg-foreground/10 rounded-lg p-2 flex flex-row items-center justify-center gap-1">
+              <FaRegBell className="text-foreground/70 text-lg cursor-pointer" />
             </div>
           </div>
+        </div>
+        <div className="flex flex-col items-start justify-center w-full">
+          <BalanceCard />
         </div>
       </div>
     </div>

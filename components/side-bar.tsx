@@ -79,20 +79,18 @@ export default function Sidebar() {
 
       {/* Mobile Navbar */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-transparent flex justify-between items-center px-2 py-1 md:hidden h-20">
-        <div className="relative flex justify-between items-center w-full bg-zinc-100 rounded-2xl h-14 shadow-2xl shadow-zinc-500/50 overflow-hidden z-10 border">
-          <div className="flex justify-between items-center w-full bg-zinc-100 rounded-2xl h-14 relative z-10">
+        <div className="relative flex justify-between items-center w-full bg-ring rounded-2xl h-14">
+          <div className="flex justify-between items-center w-full bg-card rounded-2xl h-14 relative z-10">
             {navItems.map((item, idx) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
               return (
                 <Link key={item.href} href={item.href} className="flex flex-col items-center flex-1 justify-center">
                   {isActive ? (
-                    <div className="flex items-center justify-center w-12 h-12 bg-black rounded-xl">
-                      <Icon className="h-7 w-7 text-white" />
-                    </div>
+                      <Icon className="h-7 w-7 text-foreground" />
                   ) : (
                     <div className="flex items-center justify-center w-12 h-12">
-                      <Icon className="h-7 w-7 text-black" />
+                      <Icon className="h-7 w-7 text-foreground/50" />
                     </div>
                   )}
                 </Link>
