@@ -6,6 +6,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ProfileName } from "@/components/profile-name";
 import ClientSidebarWrapper from "@/components/client-sidebar-wrapper";
+import ManualAddModal from "@/components/manual-add-modal";
 
 export default async function ProtectedLayout({
   children,

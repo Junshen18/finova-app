@@ -36,11 +36,11 @@ export default async function ProtectedPage() {
             />
           </div>
           <div className="flex flex-row items-center justify-end w-full gap-2 px-2">
-            <div className="bg-foreground/10 rounded-lg p-2 flex flex-row items-center justify-center gap-1">
+            <div className="bg-white/10 rounded-lg p-2 flex flex-row items-center justify-center gap-1 border border-black/10">
               <FaFire className="text-orange-400 text-lg cursor-pointer" />
               <div className="text-sm font-semibold text-orange-300">6</div>
             </div>
-            <div className="bg-foreground/10 rounded-lg p-2 flex flex-row items-center justify-center gap-1">
+            <div className="bg-white/10 rounded-lg p-2 flex flex-row items-center justify-center gap-1 border border-black/10">
               <FaRegBell className="text-foreground/70 text-lg cursor-pointer" />
             </div>
           </div>

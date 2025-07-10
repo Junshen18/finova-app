@@ -59,7 +59,7 @@ export default function Home() {
             <Image src="/herobg.svg" alt="Hero Background" fill className="hidden md:block absolute top-0 object-cover z-0" />
             <div className="pt-[50px] md:pt-[230px] text-center z-10 flex flex-col items-center justify-center gap-3">
               <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl font-[grifterbold]">
-                Your All-in-One <br /> <span className="text-primary">Finance </span>Companion.
+                Your All-in-One <br /> <span className="text-primary">Finance</span>Companion.
               </h1>
               <p className="md:max-w-2xl w-[320px] md:w-full mx-auto text-sm md:text-lg text-black font-medium font-[inter]">
               A smarter way to manage your money—track, split, and analyze your expenses effortlessly.
