@@ -5,7 +5,7 @@ import { FaAngleUp, FaEllipsis, FaArrowDown, FaArrowUp } from "react-icons/fa6";
 export default function BalanceCard() {
   const [isOpen, setIsOpen] = useState(false);
   return (
-    <div className="w-full h-44 bg-[#E9FE52] rounded-xl shadow-xl shadow-[#E9FE52]/50 p-6 flex flex-col justify-between">
+    <div className="w-full h-44 bg-[#E9FE52] rounded-xl p-6 flex flex-col justify-between">
       <div className="flex flex-col w-full h-full">
         <div className="flex flex-row justify-between items-start w-full">
           <div

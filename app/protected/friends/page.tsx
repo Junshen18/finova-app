@@ -7,6 +7,9 @@ import { createClient } from "@/lib/supabase/client";
 import FriendList, { Friend } from "@/components/friends/friend-list";
 import FriendRequests, { FriendRequest } from "@/components/friends/friend-request";
 import FriendRequestModal from "@/components/friends/friend-request-modal";
+import { FaQrcode, FaXmark } from "react-icons/fa6";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function FriendsPage() {
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -15,7 +18,7 @@ export default function FriendsPage() {
   const [showModal, setShowModal] = useState(false);
   const [receiverDisplayName, setReceiverDisplayName] = useState("");
   const [addLoading, setAddLoading] = useState(false);
-
+  const router = useRouter();
   const fetchFriendsAndRequests = async () => {
     const supabase = createClient();
     const [{ data: friends, error: friendError }, { data: requests, error: requestError }] =
@@ -56,9 +59,13 @@ export default function FriendsPage() {
   const handleAccept = async (id: number) => {
     const supabase = createClient();
     const { data, error } = await supabase.rpc("accept_friend_request", { friendship_id: id });
-    if (error || !data?.success) toast.error(error?.message || data?.message);
+    if (error || !data?.success) {
+      toast.error(error?.message || data?.message);
+      console.log(error);
+    }
     else {
       toast.success(data.message);
+      console.log(data);
       await fetchFriendsAndRequests();
     }
   };
@@ -66,9 +73,13 @@ export default function FriendsPage() {
   const handleReject = async (id: number) => {
     const supabase = createClient();
     const { data, error } = await supabase.rpc("reject_friend_request", { friendship_id: id });
-    if (error || !data?.success) toast.error(error?.message || data?.message);
+    if (error || !data?.success){
+        toast.error(error?.message || data?.message);
+        console.log(error);
+    }
     else {
       toast.success(data.message);
+      console.log(data);
       await fetchFriendsAndRequests();
     }
   };
@@ -90,9 +101,19 @@ export default function FriendsPage() {
   };
 
   return (
-    <div className="max-w-xl w-full mx-auto py-8 px-8">
+    <div className="max-w-xl w-full mx-auto py-8 px-6 gap-4 flex flex-col">
       <Toaster />
-      <h1 className="text-2xl font-bold mb-4">Friends</h1>
+      <div className="flex justify-between items-center ">
+        <Link href="/protected/dashboard">
+          <FaXmark className="text-2xl cursor-pointer"/>
+        </Link>
+        <h1 className="text-2xl font-bold ">Friends</h1>
+
+          <FaQrcode className="text-2xl cursor-pointer" />
+
+      </div>
+      <Button onClick={() => setShowModal(true)} className="">Send Friend Request</Button>
+      <div className="flex flex-col gap-4 bg-foreground/5 rounded-lg p-4 justify-center items-center">
       {loading ? (
         <p>Loading...</p>
       ) : (
@@ -105,8 +126,9 @@ export default function FriendsPage() {
           <FriendList friends={friends} onRemove={friendship_id => handleRemoveFriend(friendship_id)} />
         </>
       )}
+      </div>
+      
 
-      <Button onClick={() => setShowModal(true)}>Send Friend Request</Button>
 
       <FriendRequestModal
         show={showModal}

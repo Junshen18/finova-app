@@ -17,11 +17,13 @@ interface FriendListProps {
     if (friends.length === 0) return <p>No friends yet.</p>;
   
     return (
-      <ul className="mb-6">
+        <div className="w-full">
+            <h2 className="text-lg font-semibold mb-2">Friends List</h2>
+      <ul className="w-full">
         {friends.map((friend) => (
           <li
             key={friend.friendship_id}
-            className="py-2 border-b flex items-center justify-between gap-3"
+            className="py-2 flex items-center justify-between gap-3"
           >
             <div className="flex items-center gap-3">
               {friend.friend_avatar ? (
@@ -35,7 +37,7 @@ interface FriendListProps {
                   {friend.friend_name[0]} 
                 </div>
               )}
-              <span>{friend.friend_name} {friend.friendship_id}</span>
+              <span>{friend.friend_name}</span>
             </div>
   
             <Button
@@ -48,6 +50,8 @@ interface FriendListProps {
           </li>
         ))}
       </ul>
+      </div>
+
     );
   }
   

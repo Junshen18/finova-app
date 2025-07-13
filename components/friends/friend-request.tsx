@@ -18,7 +18,7 @@ export default function FriendRequests({ requests, onAccept, onReject }: Props) 
   if (requests.length === 0) return null;
 
   return (
-    <div className="mb-6">
+    <div className="mb-3 w-full">
       <h2 className="text-lg font-semibold mb-2">Pending Requests</h2>
       <ul>
         {requests.map((req) => (
@@ -35,7 +35,7 @@ export default function FriendRequests({ requests, onAccept, onReject }: Props) 
                 />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white">
-                  <FaCheck />
+                  {req.sender_name[0]}
                 </div>
               )}
               <span>{req.sender_name}</span>

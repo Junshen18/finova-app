@@ -22,10 +22,10 @@ export default function FriendRequestModal({
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 text-black">
+    <div className="fixed inset-0 bg-black/30  flex items-center justify-center z-50 text-black">
       <form
         onSubmit={onSubmit}
-        className="bg-white p-6 rounded shadow-md w-full max-w-sm"
+        className="bg-white p-6 m-6 rounded shadow-md w-full max-w-sm"
       >
         <h2 className="text-lg font-semibold mb-2">Send Friend Request</h2>
         <Input
