@@ -107,7 +107,7 @@ export default function TestExpenseForm() {
         {/* Category dropdown */}
         <Select onValueChange={(value) => setForm({ ...form, category: value })}>
             <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select a category" />
+                <SelectValue placeholder="Select a category" className=""/>
             </SelectTrigger>
             <SelectContent>
                 <SelectGroup>
