@@ -34,9 +34,8 @@ export function AddTransactionDrawer({ open, onClose }: { open: boolean, onClose
             </TabsContent>
           </Tabs>
         </DrawerHeader>
-        <div className="flex flex-col p-4">
-          <DrawerFooter>
-            <Button>Add</Button>
+        <div className="flex flex-col px-4">
+          <DrawerFooter className="py-0 px-4">
             <DrawerClose asChild>
               <Button variant="outline" onClick={onClose}>Cancel</Button>
             </DrawerClose>
