@@ -29,6 +29,10 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+    /* Custom variables for form backgrounds */
+    --form-bg: 0 0% 98%;
+    --form-border: 0 0% 90%;
+    --form-hover: 0 0% 95%;
   }
   .dark {
     --background: 0 0% 3.9%;
@@ -55,6 +59,10 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    /* Custom variables for form backgrounds in dark mode */
+    --form-bg: 0 0% 8%;
+    --form-border: 0 0% 15%;
+    --form-hover: 0 0% 12%;
   }
 }
 
@@ -92,6 +100,9 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-form-bg: var(--form-bg);
+  --color-form-border: var(--form-border);
+  --color-form-hover: var(--form-hover);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -146,6 +157,9 @@ body {
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.705 0.015 286.067);
+  --form-bg: oklch(0.98 0.001 286.375);
+  --form-border: oklch(0.92 0.004 286.32);
+  --form-hover: oklch(0.95 0.001 286.375);
 }
 
 .dark {
@@ -180,6 +194,9 @@ body {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.552 0.016 285.938);
+  --form-bg: oklch(0.18 0.006 285.885);
+  --form-border: oklch(1 0 0 / 15%);
+  --form-hover: oklch(0.22 0.006 285.885);
 }
 
 @layer base {

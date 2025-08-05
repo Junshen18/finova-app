@@ -1,55 +1,74 @@
 import Link from "next/link";
 import Image from "next/image";
-import { UserCircleIcon, HomeIcon, ListBulletIcon, PlusCircleIcon, Cog6ToothIcon } from "@heroicons/react/24/outline";
+import { UserCircleIcon, HomeIcon, ListBulletIcon, PlusCircleIcon, Cog6ToothIcon, WalletIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import { usePathname } from "next/navigation";
 
 export function DesktopSidebar({ profile, onAddTransaction }: { profile: any, onAddTransaction: () => void }) {
+  const pathname = usePathname();
+
+  const navItems = [
+    { href: "/protected", label: "Dashboard", icon: HomeIcon },
+    { href: "/protected/transactions", label: "Transactions", icon: ListBulletIcon },
+    { href: "/protected/budget", label: "Budget", icon: WalletIcon },
+    { href: "/protected/friends", label: "Friends", icon: UserGroupIcon },
+    { href: "/protected/account", label: "Settings", icon: Cog6ToothIcon },
+  ];
+
   return (
-    <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col justify-between px-4 shadow-lg h-screen">
+    <aside className="hidden md:flex w-64 bg-black text-white flex-col justify-between px-6 py-8 h-screen">
       <div>
-        <div className="flex items-center gap-2 mb-8 px-2 py-4">
+        <div className="flex items-center gap-2 mb-12 px-2">
           <Image
-            src="/finova-logo.svg"
-            alt="dashboard"
-            width={150}
-            height={100}
-            className="w-24 md:w-[150px]"
+            src="/finova-white-logo.svg"
+            alt="Finova"
+            width={120}
+            height={40}
+            className="w-24"
           />
         </div>
-        <nav className="flex flex-col gap-2">
-          <Link
-            href="/expense-tracker/dashboard"
-            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-violet-50 transition"
-          >
-            <HomeIcon className="h-5 w-5 text-violet-500" />
-            <span>Dashboard</span>
-          </Link>
-          <Link
-            href="/expense-tracker/transactions"
-            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-violet-50 transition"
-          >
-            <ListBulletIcon className="h-5 w-5 text-violet-500" />
-            <span>Transactions</span>
-          </Link>
+        <nav className="flex flex-col gap-3">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group ${
+                  isActive 
+                    ? 'bg-[#E9FE52] text-black shadow-lg' 
+                    : 'hover:bg-white/10 text-white'
+                }`}
+              >
+                <item.icon className={`h-5 w-5 ${
+                  isActive ? 'text-black' : 'text-white group-hover:text-[#E9FE52]'
+                }`} />
+                <span className={`font-medium ${
+                  isActive ? 'text-black' : 'text-white'
+                }`}>
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+          
           <button
             type="button"
             onClick={onAddTransaction}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-violet-50 transition w-full text-left"
+            className="flex items-center gap-4 px-4 py-3 rounded-xl bg-[#E9FE52] text-black hover:bg-[#E9FE52]/90 transition-all duration-200 font-medium shadow-lg"
           >
-            <PlusCircleIcon className="h-5 w-5 text-violet-500" />
+            <PlusCircleIcon className="h-5 w-5" />
             <span>Add Transaction</span>
           </button>
-          <Link
-            href="/expense-tracker/settings"
-            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-violet-50 transition"
-          >
-            <Cog6ToothIcon className="h-5 w-5 text-violet-500" />
-            <span>Settings</span>
-          </Link>
         </nav>
       </div>
-      <div className="flex items-center gap-2 px-2">
-        <UserCircleIcon className="h-8 w-8 text-gray-400" />
-        <span className="text-gray-600 py-4">{profile?.display_name}</span>
+      <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 backdrop-blur-sm">
+        <div className="w-8 h-8 bg-[#E9FE52] rounded-full flex items-center justify-center shadow-lg">
+          <UserCircleIcon className="h-5 w-5 text-black" />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-white">{profile?.display_name || 'User'}</p>
+          <p className="text-xs text-gray-400">Premium Member</p>
+        </div>
       </div>
     </aside>
   );

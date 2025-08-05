@@ -1,47 +1,118 @@
 import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from "./ui/drawer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Tabs, TabsTrigger, TabsList, TabsContent } from "./ui/tabs";
 import { AddIncomeForm } from "./add-income-form";
 import { useState } from "react";
 import { AddExpenseForm } from "./add-expense-form";
-
+import { AddTransferForm } from "./add-transfer-form";
+import { X } from "lucide-react";
 
 export function AddTransactionDrawer({ open, onClose }: { open: boolean, onClose: () => void }) {
   const [drawerOpen, setDrawerOpen] = useState(open);
+  const [activeTab, setActiveTab] = useState("expense");
 
   // Sync drawer open state with prop
   if (drawerOpen !== open) setDrawerOpen(open);
 
+  // Use modal for desktop/tablet, drawer for mobile
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+  const handleClose = () => {
+    setDrawerOpen(false);
+    onClose();
+  };
+
+  if (isMobile) {
+    return (
+      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <DrawerContent className="max-h-[90vh] bg-background">
+          <DrawerHeader className="border-b border-border pb-4">
+            <DrawerTitle className="text-xl font-bold text-foreground mb-4">Add Transaction</DrawerTitle>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-3 bg-muted p-1 rounded-lg">
+                <TabsTrigger 
+                  value="income" 
+                  className="data-[state=active]:bg-[#E9FE52] data-[state=active]:text-black data-[state=active]:shadow-sm text-muted-foreground"
+                >
+                  Income
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="expense"
+                  className="data-[state=active]:bg-[#E9FE52] data-[state=active]:text-black data-[state=active]:shadow-sm text-muted-foreground"
+                >
+                  Expense
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="transfer"
+                  className="data-[state=active]:bg-[#E9FE52] data-[state=active]:text-black data-[state=active]:shadow-sm text-muted-foreground"
+                >
+                  Transfer
+                </TabsTrigger>
+              </TabsList>
+              
+              <div className="mt-6">
+                <TabsContent value="income" className="space-y-4">
+                  <AddIncomeForm onCancel={handleClose} />
+                </TabsContent>
+                <TabsContent value="expense" className="space-y-4">
+                  <AddExpenseForm onCancel={handleClose} />
+                </TabsContent>
+                <TabsContent value="transfer" className="space-y-4">
+                  <AddTransferForm onCancel={handleClose} />
+                </TabsContent>
+              </div>
+            </Tabs>
+          </DrawerHeader>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  // Modal for desktop/tablet
   return (
-    <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-      <DrawerContent>
-        <DrawerHeader>
-          <DrawerTitle className="mb-2">Add Transaction</DrawerTitle>
-          <Tabs defaultValue="expense" className="w-full items-center justify-center">
-            <TabsList>
-              <TabsTrigger value="income">Income</TabsTrigger>
-              <TabsTrigger value="expense">Expense</TabsTrigger>
-              <TabsTrigger value="transfer">Transfer</TabsTrigger>
+    <Dialog open={drawerOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-2xl max-h-[85vh] bg-background border-border">
+        <DialogHeader className="">
+          <div className="flex items-center justify-between mb-4">
+            <DialogTitle className="text-xl font-bold text-foreground">Add Transaction</DialogTitle>
+          </div>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 bg-muted p-1 rounded-lg">
+              <TabsTrigger 
+                value="income" 
+                className="data-[state=active]:bg-[#E9FE52] data-[state=active]:text-black data-[state=active]:shadow-sm text-muted-foreground"
+              >
+                Income
+              </TabsTrigger>
+              <TabsTrigger 
+                value="expense"
+                className="data-[state=active]:bg-[#E9FE52] data-[state=active]:text-black data-[state=active]:shadow-sm text-muted-foreground"
+              >
+                Expense
+              </TabsTrigger>
+              <TabsTrigger 
+                value="transfer"
+                className="data-[state=active]:bg-[#E9FE52] data-[state=active]:text-black data-[state=active]:shadow-sm text-muted-foreground"
+              >
+                Transfer
+              </TabsTrigger>
             </TabsList>
-            <TabsContent value="income" className=" w-full justify-center items-center">
-              <AddIncomeForm />
-            </TabsContent>
-            <TabsContent value="expense" className="w-full justify-center items-center">
-              <AddExpenseForm />
-            </TabsContent>
-            <TabsContent value="transfer">
-              <div>Transfer</div>
-            </TabsContent>
+            
+            <div className="mt-6">
+              <TabsContent value="income" className="space-y-4">
+                <AddIncomeForm onCancel={handleClose} />
+              </TabsContent>
+              <TabsContent value="expense" className="space-y-4">
+                <AddExpenseForm onCancel={handleClose} />
+              </TabsContent>
+              <TabsContent value="transfer" className="space-y-4">
+                <AddTransferForm onCancel={handleClose} />
+              </TabsContent>
+            </div>
           </Tabs>
-        </DrawerHeader>
-        <div className="flex flex-col px-4">
-          <DrawerFooter className="py-0 px-4">
-            <DrawerClose asChild>
-              <Button variant="outline" onClick={onClose}>Cancel</Button>
-            </DrawerClose>
-          </DrawerFooter>
-        </div>
-      </DrawerContent>
-    </Drawer>
+        </DialogHeader>
+      </DialogContent>
+    </Dialog>
   );
 } 

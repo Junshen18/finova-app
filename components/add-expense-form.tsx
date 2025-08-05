@@ -8,13 +8,17 @@ import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
 import { Input } from "./ui/input";
 import { createClient } from "@/lib/supabase/client";
-import { Dialog, DialogContent, DialogTitle } from "./ui/dialog"; // Use your modal/dialog component
+import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
 import { FaCamera, FaUpload } from "react-icons/fa";
 import { useRef } from "react";
 import { toast } from "sonner";
 import { SelectionModal } from "./selection-modal";
 
-export function AddExpenseForm() {
+interface AddExpenseFormProps {
+  onCancel?: () => void;
+}
+
+export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [date, setDate] = useState<Date>(new Date());
@@ -37,7 +41,9 @@ export function AddExpenseForm() {
     date: date.toISOString(),
     amount: "",
     category: "",
+    category_id: "",
     account_id: "",
+    account_name: "",
     description: "",
     img_url: "",
     is_split_bill: false,
@@ -62,7 +68,6 @@ export function AddExpenseForm() {
 
   useEffect(() => {
     if (cameraModalOpen) {
-      // Start camera
       navigator.mediaDevices
         .getUserMedia({ video: { facingMode: "environment" } })
         .then((stream) => {
@@ -77,7 +82,6 @@ export function AddExpenseForm() {
           setCameraModalOpen(false);
         });
     } else {
-      // Stop camera
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
@@ -158,10 +162,15 @@ export function AddExpenseForm() {
       const ctx = canvas.getContext("2d");
       if (ctx) {
         ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL("image/png");
-        setReceiptImage(dataUrl);
-        setForm((prev) => ({ ...prev, img_url: dataUrl }));
-        setCameraModalOpen(false);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], "receipt.png", { type: "image/png" });
+            setFile(file);
+            const dataUrl = canvas.toDataURL("image/png");
+            setReceiptImage(dataUrl);
+            setCameraModalOpen(false);
+          }
+        }, "image/png");
       }
     }
   };
@@ -173,7 +182,7 @@ export function AddExpenseForm() {
     const supabase = createClient();
     const filePath = `receipts/${userId}/${Date.now()}-${file.name}`;
     const { data, error } = await supabase.storage
-      .from("receipts")
+      .from("expense-receipts")
       .upload(filePath, file);
 
     if (error) {
@@ -181,10 +190,13 @@ export function AddExpenseForm() {
       return null;
     }
 
-    return filePath;
+    const { data: publicUrlData } = supabase.storage
+      .from("expense-receipts")
+      .getPublicUrl(filePath);
+
+    return publicUrlData?.publicUrl || null;
   };
 
-  // Move "Other" to the end
   const sortedCategories = [
     ...categories.filter((cat) => cat.name !== "Other"),
     ...categories.filter((cat) => cat.name === "Other"),
@@ -217,6 +229,7 @@ export function AddExpenseForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          category: form.category_id,
           img_url: imgPath,
           account_id: form.account_id ? parseInt(form.account_id) : undefined,
           group_id: form.group_id ? parseInt(form.group_id) : undefined,
@@ -228,6 +241,21 @@ export function AddExpenseForm() {
       if (res.ok) {
         toast.success("Expense added successfully");
         setFile(null);
+        // Reset form
+        setForm({
+          user_id: form.user_id,
+          date: new Date().toISOString(),
+          amount: "",
+          category: "",
+          category_id: "",
+          account_id: "",
+          account_name: "",
+          description: "",
+          img_url: "",
+          is_split_bill: false,
+          group_id: "",
+        });
+        setReceiptImage(null);
       } else {
         toast.error("Failed to save expense.");
         console.error(data);
@@ -241,26 +269,27 @@ export function AddExpenseForm() {
   };
 
   return (
-    <div>
-      <Card>
-        <CardContent className="p-4">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-            <div className="flex flex-col gap-2">
-              {/* ScanReceipt */}
-              <div className="flex flex-row gap-2">
+    <div className="w-full">
+      <Card className="border-0 shadow-sm bg-form-bg">
+        <CardContent className="p-4 md:p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Receipt Section */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium text-foreground">Receipt</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <Button
                   type="button"
-                  className="w-full bg-black text-white border-input border justify-start px-3 py-1"
+                  className="w-full bg-form-bg text-foreground border-form-border border justify-start px-3 py-2 hover:bg-form-hover"
                   onClick={handleScanReceiptClick}
                 >
-                  <FaCamera /> Scan Receipt
+                  <FaCamera className="mr-2" /> Scan Receipt
                 </Button>
                 <Button
                   type="button"
-                  className="w-full bg-black text-white border-input border justify-start px-3 py-1"
+                  className="w-full bg-form-bg text-foreground border-form-border border justify-start px-3 py-2 hover:bg-form-hover"
                   onClick={handleUploadReceiptClick}
                 >
-                  <FaUpload /> Upload Receipt
+                  <FaUpload className="mr-2" /> Upload Receipt
                 </Button>
               </div>
               <input
@@ -270,223 +299,219 @@ export function AddExpenseForm() {
                 style={{ display: "none" }}
                 onChange={handleFileChange}
               />
-              {/* Scan Receipt Modal */}
-              <Dialog open={cameraModalOpen} onOpenChange={setCameraModalOpen}>
-                <DialogContent className="flex flex-col items-center gap-4">
-                  <DialogTitle>Scan Receipt</DialogTitle>
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    className="w-full max-w-xs rounded border"
-                  />
-                  <Button
-                    onClick={handleCapture}
-                    className="w-full bg-black text-white"
-                  >
-                    Capture
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setCameraModalOpen(false)}
-                    className="w-full"
-                  >
-                    Cancel
-                  </Button>
-                </DialogContent>
-              </Dialog>
+            </div>
 
-              {/* Receipt Preview */}
-              {receiptImage && (
-                <div className="my-2 justify-center items-center flex">
-                  <img
-                    src={receiptImage}
-                    alt="Receipt Preview"
-                    className="max-w-full max-h-40 rounded border"
-                  />
-                </div>
-              )}
+            {/* Receipt Preview */}
+            {receiptImage && (
+              <div className="flex justify-center">
+                <img
+                  src={receiptImage}
+                  alt="Receipt Preview"
+                  className="max-w-full max-h-40 rounded-lg border border-form-border"
+                />
+              </div>
+            )}
 
+            {/* Form Fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Date */}
-              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    id="date"
-                    className="w-full justify-between font-normal"
+              <div className="md:col-span-2">
+                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      id="date"
+                      className="w-full justify-between font-normal bg-form-bg text-foreground border-form-border hover:bg-form-hover"
+                    >
+                      {date ? date.toLocaleDateString() : "Select date"}
+                      <ChevronDownIcon />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-auto overflow-hidden p-0 bg-form-bg border-form-border"
+                    align="start"
                   >
-                    {date ? date.toLocaleDateString() : "Select date"}
-                    <ChevronDownIcon />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-auto overflow-hidden p-0"
-                  align="start"
-                >
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    captionLayout="dropdown"
-                    onSelect={(date) => {
-                      if (date) {
-                        setDate(date);
-                      }
-                      setCalendarOpen(false);
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      captionLayout="dropdown"
+                      onSelect={(date) => {
+                        if (date) {
+                          setDate(date);
+                        }
+                        setCalendarOpen(false);
+                      }}
+                      className="bg-form-bg text-foreground"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
 
               {/* Amount */}
-              <Input
-                type="number"
-                placeholder="Amount"
-                name="amount"
-                value={form.amount}
-                onChange={handleChange}
-              />
+              <div className="md:col-span-2">
+                <Input
+                  type="number"
+                  placeholder="Amount"
+                  name="amount"
+                  value={form.amount}
+                  onChange={handleChange}
+                  className="w-full bg-form-bg text-foreground border-form-border placeholder:text-muted-foreground"
+                />
+              </div>
 
               {/* Category */}
-              <Button
-                type="button"
-                className="w-full bg-black text-white border-input border justify-start px-3 py-1"
-                onClick={() => setCategoryModalOpen(true)}
-              >
-                {form.category || "Select a Category"}
-              </Button>
-
-              {/* Category Modal */}
-              <SelectionModal
-                open={categoryModalOpen}
-                onOpenChange={setCategoryModalOpen}
-                options={sortedCategories}
-                selected={form.category}
-                onSelect={(name: string) =>
-                  setForm({ ...form, category: name })
-                }
-                title="Select a Category"
-              />
-              {/* <Dialog open={categoryModalOpen} onOpenChange={setCategoryModalOpen}>
-              <DialogTitle className="sr-only">Select a Category</DialogTitle>
-              <DialogContent>
-                <div className="grid grid-cols-2 gap-2">
-                  {sortedCategories.map((cat) => (
-                    <Button
-                      key={cat.name}
-                      variant={form.category === cat.name ? "default" : "outline"}
-                      onClick={() => {
-                        setForm({ ...form, category: cat.name });
-                        setCategoryModalOpen(false);
-                      }}
-                    >
-                      {cat.name}
-                    </Button>
-                  ))}
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      // Handle add new category logic here
-                      setCategoryModalOpen(false);
-                      // Optionally open another modal for adding
-                    }}
-                  >
-                    + Add
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog> */}
+              <div className="md:col-span-1">
+                <Button
+                  type="button"
+                  className="w-full bg-form-bg text-foreground border-form-border border justify-start px-3 py-2 hover:bg-form-hover"
+                  onClick={() => setCategoryModalOpen(true)}
+                >
+                  {form.category || "Select Category"}
+                </Button>
+              </div>
 
               {/* Account */}
-              <Button
-                type="button"
-                className="w-full bg-black text-white border-input border justify-start px-3 py-1"
-                onClick={() => setAccountModalOpen(true)}
-              >
-                {form.account_id || "Select an Account"}
-              </Button>
-
-              {/* Account Modal */}
-              <SelectionModal
-                open={accountModalOpen}
-                onOpenChange={setAccountModalOpen}
-                options={sortedAccounts}
-                selected={form.account_id}
-                onSelect={(id: string) => setForm({ ...form, account_id: id })}
-                title="Select an Account"
-              />
-              {/* <Dialog open={accountModalOpen} onOpenChange={setAccountModalOpen}>
-              <DialogTitle className="sr-only">Select an Account</DialogTitle>
-              <DialogContent>
-                <div className="grid grid-cols-2 gap-2">
-                  {sortedAccounts.map((acc) => (
-                    <Button
-                      key={acc.name}
-                      variant={form.account_id === acc.id ? "default" : "outline"}
-                      onClick={() => {
-                        setForm({ ...form, account_id: acc.id });
-                        setAccountModalOpen(false);
-                      }}
-                    >
-                      {acc.name}
-                    </Button>
-                  ))}
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      // Handle add new category logic here
-                      setAccountModalOpen(false);
-                      // Optionally open another modal for adding
-                    }}
-                  >
-                    + Add
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog> */}
+              <div className="md:col-span-1">
+                <Button
+                  type="button"
+                  className="w-full bg-form-bg text-foreground border-form-border border justify-start px-3 py-2 hover:bg-form-hover"
+                  onClick={() => setAccountModalOpen(true)}
+                >
+                  {form.account_name || "Select Account"}
+                </Button>
+              </div>
 
               {/* Notes */}
-              <Input
-                type="text"
-                placeholder="Notes"
-                name="description"
-                value={form.description}
-                onChange={handleChange}
-              />
+              <div className="md:col-span-2">
+                <Input
+                  type="text"
+                  placeholder="Notes"
+                  name="description"
+                  value={form.description}
+                  onChange={handleChange}
+                  className="w-full bg-form-bg text-foreground border-form-border placeholder:text-muted-foreground"
+                />
+              </div>
 
               {/* Split Bill */}
-              <label className="flex items-center gap-2">
-                <input
-                  name="is_split_bill"
-                  type="checkbox"
-                  checked={form.is_split_bill}
-                  onChange={handleChange}
-                />
-                Split Bill
-              </label>
+              <div className="md:col-span-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    name="is_split_bill"
+                    type="checkbox"
+                    checked={form.is_split_bill}
+                    onChange={handleChange}
+                    className="rounded bg-form-bg border-form-border"
+                  />
+                  <span className="text-sm font-medium text-foreground">Split Bill with Friends</span>
+                </label>
+              </div>
 
               {/* Group ID */}
               {form.is_split_bill && (
-                <input
-                  name="group_id"
-                  type="number"
-                  placeholder="Group ID"
-                  value={form.group_id}
-                  onChange={handleChange}
-                  className="border p-2 rounded"
-                />
+                <div className="md:col-span-2">
+                  <Input
+                    name="group_id"
+                    type="number"
+                    placeholder="Group ID"
+                    value={form.group_id}
+                    onChange={handleChange}
+                    className="w-full bg-form-bg text-foreground border-form-border placeholder:text-muted-foreground"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Submit and Cancel Buttons */}
+            <div className="flex flex-col gap-2 pt-4 justify-center">
+              
+              <Button
+                type="submit"
+                disabled={loading}
+                className="bg-[#E9FE52] text-black hover:bg-[#E9FE52]/90 font-semibold"
+              >
+                {loading ? "Adding..." : "Add Expense"}
+              </Button>
+              {onCancel && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onCancel}
+                  className="bg-muted text-muted-foreground border-border hover:bg-accent"
+                >
+                  Cancel
+                </Button>
               )}
             </div>
           </form>
         </CardContent>
       </Card>
-      <div className="flex flex-row gap-2 w-full px-4 mt-4">
-        <Button
-          type="submit"
-          className="w-full bg-foreground text-background border-input border justify-start px-3 py-1 justify-center"
-        >
-          Add
-        </Button>
-      </div>
+
+      {/* Camera Modal */}
+      <Dialog open={cameraModalOpen} onOpenChange={setCameraModalOpen}>
+        <DialogContent className="flex flex-col items-center gap-4 max-w-sm bg-form-bg border-form-border">
+          <DialogTitle className="text-foreground">Scan Receipt</DialogTitle>
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            className="w-full max-w-xs rounded-lg border border-form-border"
+          />
+          <div className="flex gap-2 w-full">
+            <Button
+              onClick={handleCapture}
+              className="flex-1 bg-[#E9FE52] text-black hover:bg-[#E9FE52]/90"
+            >
+              Capture
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setCameraModalOpen(false)}
+              className="flex-1 bg-form-bg text-foreground border-form-border hover:bg-form-hover"
+            >
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Category Modal */}
+      <SelectionModal
+        open={categoryModalOpen}
+        onOpenChange={setCategoryModalOpen}
+        options={sortedCategories}
+        selected={form.category_id}
+        onSelect={(id: string) => {
+          const selectedCategory = sortedCategories.find(
+            (cat) => cat.id === id
+          );
+          setForm({
+            ...form,
+            category: selectedCategory?.name || "",
+            category_id: id,
+          });
+        }}
+        title="Select a Category"
+      />
+
+      {/* Account Modal */}
+      <SelectionModal
+        open={accountModalOpen}
+        onOpenChange={setAccountModalOpen}
+        options={sortedAccounts}
+        selected={form.account_id}
+        onSelect={(id: string) => {
+          const selectedAccount = sortedAccounts.find(
+            (acc) => acc.id === id
+          );
+          setForm({
+            ...form,
+            account_name: selectedAccount?.name || "",
+            account_id: id,
+          });
+        }}
+        title="Select an Account"
+      />
     </div>
   );
 }

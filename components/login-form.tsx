@@ -49,14 +49,15 @@ export function LoginForm({
         return;
       }
       // If user not found, switch to sign up mode
-      // if (error.message && error.message.toLowerCase().includes("user not found")) {
+      if (error.message && error.message.toLowerCase().includes("user not found")) {
       console.log("failed");
       setIsSignUpMode(true);
       // setError("Email not found. Please re-enter your password and confirm to sign up.");
       setIsLoading(false);
       // return;
-      // }
+      }
       // Other errors
+      setError(error.message || "An error occurred");
       return;
     } else {
       console.log("perform sign up");
