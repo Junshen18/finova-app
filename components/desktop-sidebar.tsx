@@ -1,9 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
-import { UserCircleIcon, HomeIcon, ListBulletIcon, PlusCircleIcon, Cog6ToothIcon, WalletIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import { UserCircleIcon, HomeIcon, ListBulletIcon, Cog6ToothIcon, WalletIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import { usePathname } from "next/navigation";
 
-export function DesktopSidebar({ profile, onAddTransaction }: { profile: any, onAddTransaction: () => void }) {
+export function DesktopSidebar({ profile }: { profile: any }) {
   const pathname = usePathname();
 
   const navItems = [
@@ -15,7 +15,7 @@ export function DesktopSidebar({ profile, onAddTransaction }: { profile: any, on
   ];
 
   return (
-    <aside className="hidden md:flex w-64 bg-black text-white flex-col justify-between px-6 py-8 h-screen">
+    <aside className="hidden fixed md:flex w-64 bg-black text-white flex-col justify-between px-6 py-8 h-screen">
       <div>
         <div className="flex items-center gap-2 mb-12 px-2">
           <Image
@@ -28,7 +28,11 @@ export function DesktopSidebar({ profile, onAddTransaction }: { profile: any, on
         </div>
         <nav className="flex flex-col gap-3">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            // Check if current path matches this item's href
+            const isActive = pathname === item.href || 
+              (item.href === "/protected" && pathname === "/protected/dashboard") ||
+              (item.href !== "/protected" && pathname.startsWith(item.href));
+            
             return (
               <Link
                 key={item.href}
@@ -50,15 +54,6 @@ export function DesktopSidebar({ profile, onAddTransaction }: { profile: any, on
               </Link>
             );
           })}
-          
-          <button
-            type="button"
-            onClick={onAddTransaction}
-            className="flex items-center gap-4 px-4 py-3 rounded-xl bg-[#E9FE52] text-black hover:bg-[#E9FE52]/90 transition-all duration-200 font-medium shadow-lg"
-          >
-            <PlusCircleIcon className="h-5 w-5" />
-            <span>Add Transaction</span>
-          </button>
         </nav>
       </div>
       <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 backdrop-blur-sm">

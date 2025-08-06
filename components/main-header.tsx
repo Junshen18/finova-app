@@ -13,8 +13,8 @@ interface MainHeaderProps {
 export default async function MainHeader({ profile }: MainHeaderProps) {
 
     return (
-        <div className="flex flex-row items-center justify-between w-full">
-          <div className="flex flex-col items-start justify-center w-full">
+        <div className="flex flex-row items-center justify-between w-full ">
+          <div className="flex flex-col items-start justify-center w-full ">
             <div>
               <h1 className="text-sm font-medium opacity-70">Good Morning,</h1>
             </div>

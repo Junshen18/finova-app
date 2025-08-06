@@ -19,13 +19,13 @@ export default async function DashboardPage() {
     }
     
     return (
-        <div className="flex min-h-screen bg-background text-foreground">
+        <div className="flex min-h-screen bg-background text-foreground ml-64">
             <div className="flex flex-col w-full ">
-                <div className="flex flex-col items-start justify-start w-full h-full gap-6 p-4 md:p-6 lg:p-8">
+                <div className="flex flex-col items-start justify-start max-w-7xl h-full gap-6 p-4 md:p-6 lg:p-8">
                     <MainHeader profile={profile} />
                     
                     {/* Main Content */}
-                    <div className="w-full max-w-7xl mx-auto">
+                    <div className="w-full mx-auto">
                         {/* Balance Card Section */}
                         <div className="mb-8">
                             <BalanceCard />

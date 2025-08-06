@@ -4,6 +4,7 @@ import { useState } from "react";
 import { DesktopSidebar } from "./desktop-sidebar";
 import { MobileNavbar } from "./mobile-navbar";
 import { AddTransactionDrawer } from "./add-transaction-drawer";
+import { FloatingActionButton } from "./floating-action-button";
 
 export default function Sidebar() {
   const { profile } = useProfile();
@@ -11,9 +12,10 @@ export default function Sidebar() {
 
   return (
     <>
-      <DesktopSidebar profile={profile} onAddTransaction={() => setModalOpen(true)} />
+      <DesktopSidebar profile={profile} />
       <MobileNavbar onAddTransaction={() => setModalOpen(true)} />
       <AddTransactionDrawer open={modalOpen} onClose={() => setModalOpen(false)} />
+      <FloatingActionButton />
     </>
   );
 }

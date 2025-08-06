@@ -33,19 +33,19 @@ export function AddTransactionDrawer({ open, onClose }: { open: boolean, onClose
               <TabsList className="grid w-full grid-cols-3 bg-muted p-1 rounded-lg">
                 <TabsTrigger 
                   value="income" 
-                  className="data-[state=active]:bg-[#E9FE52] data-[state=active]:text-black data-[state=active]:shadow-sm text-muted-foreground"
+                  className="data-[state=active]:bg-[#E9FE52] data-[state=active]:text-black data-[state=active]:shadow-sm text-muted-foreground transition-all duration-200"
                 >
                   Income
                 </TabsTrigger>
                 <TabsTrigger 
                   value="expense"
-                  className="data-[state=active]:bg-[#E9FE52] data-[state=active]:text-black data-[state=active]:shadow-sm text-muted-foreground"
+                  className="data-[state=active]:bg-[#E9FE52] data-[state=active]:text-black data-[state=active]:shadow-sm text-muted-foreground transition-all duration-200"
                 >
                   Expense
                 </TabsTrigger>
                 <TabsTrigger 
                   value="transfer"
-                  className="data-[state=active]:bg-[#E9FE52] data-[state=active]:text-black data-[state=active]:shadow-sm text-muted-foreground"
+                  className="data-[state=active]:bg-[#E9FE52] data-[state=active]:text-black data-[state=active]:shadow-sm text-muted-foreground transition-all duration-200"
                 >
                   Transfer
                 </TabsTrigger>
@@ -81,25 +81,25 @@ export function AddTransactionDrawer({ open, onClose }: { open: boolean, onClose
             <TabsList className="grid w-full grid-cols-3 bg-muted p-1 rounded-lg">
               <TabsTrigger 
                 value="income" 
-                className="data-[state=active]:bg-[#E9FE52] data-[state=active]:text-black data-[state=active]:shadow-sm text-muted-foreground"
+                className="data-[state=active]:bg-[#E9FE52] data-[state=active]:text-black data-[state=active]:shadow-sm text-muted-foreground transition-all duration-200"
               >
                 Income
               </TabsTrigger>
               <TabsTrigger 
                 value="expense"
-                className="data-[state=active]:bg-[#E9FE52] data-[state=active]:text-black data-[state=active]:shadow-sm text-muted-foreground"
+                className="data-[state=active]:bg-[#E9FE52] data-[state=active]:text-black data-[state=active]:shadow-sm text-muted-foreground transition-all duration-200"
               >
                 Expense
               </TabsTrigger>
               <TabsTrigger 
                 value="transfer"
-                className="data-[state=active]:bg-[#E9FE52] data-[state=active]:text-black data-[state=active]:shadow-sm text-muted-foreground"
+                className="data-[state=active]:bg-[#E9FE52] data-[state=active]:text-black data-[state=active]:shadow-sm text-muted-foreground transition-all duration-200"
               >
                 Transfer
               </TabsTrigger>
             </TabsList>
             
-            <div className="mt-6">
+            <div className="mt-2">
               <TabsContent value="income" className="space-y-4">
                 <AddIncomeForm onCancel={handleClose} />
               </TabsContent>
