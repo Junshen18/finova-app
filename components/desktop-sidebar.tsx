@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { UserCircleIcon, HomeIcon, ListBulletIcon, Cog6ToothIcon, WalletIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import { UserCircleIcon, HomeIcon, ListBulletIcon, Cog6ToothIcon, WalletIcon, UserGroupIcon, SparklesIcon } from "@heroicons/react/24/outline";
+import { NotificationBadge } from "@/components/notification-badge";
 import { usePathname } from "next/navigation";
 
 export function DesktopSidebar({ profile }: { profile: any }) {
@@ -10,6 +11,7 @@ export function DesktopSidebar({ profile }: { profile: any }) {
     { href: "/protected", label: "Dashboard", icon: HomeIcon },
     { href: "/protected/transactions", label: "Transactions", icon: ListBulletIcon },
     { href: "/protected/budget", label: "Budget", icon: WalletIcon },
+    { href: "/protected/ai-analysis", label: "AI Analysis", icon: SparklesIcon },
     { href: "/protected/friends", label: "Friends", icon: UserGroupIcon },
     { href: "/protected/account", label: "Settings", icon: Cog6ToothIcon },
   ];

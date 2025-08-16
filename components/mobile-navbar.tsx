@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { navItems } from "../data/navItems";
-import { PlusCircleIcon, HomeIcon, DocumentCurrencyDollarIcon, UserCircleIcon, WalletIcon } from "@heroicons/react/24/outline";
+import { PlusCircleIcon, HomeIcon, DocumentCurrencyDollarIcon, UserCircleIcon, WalletIcon, SparklesIcon } from "@heroicons/react/24/outline";
 
 export function MobileNavbar({ onAddTransaction }: { onAddTransaction: () => void }) {
   return (
@@ -27,6 +27,8 @@ export function MobileNavbar({ onAddTransaction }: { onAddTransaction: () => voi
                 ? DocumentCurrencyDollarIcon
                 : item.icon === "WalletIcon"
                 ? WalletIcon
+                : item.icon === "SparklesIcon"
+                ? SparklesIcon
                 : item.icon === "UserCircleIcon"
                 ? UserCircleIcon
                 : HomeIcon;

@@ -18,23 +18,23 @@ export default function Home() {
               <Image src="/finova-logo.svg" alt="Logo" width={185} height={42} className="w-[100px] h-[25px] md:w-[150px] md:h-[30px] object-contain cursor-pointer"/>
               {/* Desktop Navigation */}
               <div className="hidden sm:flex sm:items-center sm:space-x-8 font-[inter] font-medium text-base">
-                <a href="#" className="text-gray-600 hover:text-gray-900">
+                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                   Features
                 </a>
-                <a href="#" className="text-gray-600 hover:text-gray-900">
+                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                   How it works
                 </a>
-                <a href="#" className="text-gray-600 hover:text-gray-900">
+                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                   Testimonials
                 </a>
-                <a href="#" className="text-gray-600 hover:text-gray-900">
+                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                   FAQs
                 </a>
               </div>
             <div className="flex items-center gap-6">
               <div className="flex gap-2">
-                <Link href="/auth/login" className="bg-zinc-100 hover:bg-zinc-200 transition-all duration-200 text-black px-4 py-1 rounded-4xl whitespace-nowrap font-medium">Log In</Link>
-                <button className="bg-black hover:bg-black/80 transition-all duration-200 text-white px-4 py-1 rounded-4xl whitespace-nowrap font-medium cursor-pointer" onClick={() => setModalOpen(true)}>Get Started</button>
+                <Link href="/auth/login" className="bg-secondary hover:bg-secondary/80 transition-all duration-200 text-secondary-foreground px-4 py-1 rounded-4xl whitespace-nowrap font-medium">Log In</Link>
+                <button className="bg-primary hover:bg-primary/90 transition-all duration-200 text-primary-foreground px-4 py-1 rounded-4xl whitespace-nowrap font-medium cursor-pointer" onClick={() => setModalOpen(true)}>Get Started</button>
               </div>
             </div>
 
@@ -58,14 +58,14 @@ export default function Home() {
             <Image src="/fimi.svg" alt="Fimi" width={300} height={280} className="w-[190px] h-[180px] md:w-[300px] md:h-[280px] absolute top-5 md:top-10 left-[50%] -translate-x-1/2 object-cover z-0" />
             <Image src="/herobg.svg" alt="Hero Background" fill className="hidden md:block absolute top-0 object-cover z-0" />
             <div className="pt-[50px] md:pt-[230px] text-center z-10 flex flex-col items-center justify-center gap-3">
-              <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl font-[grifterbold]">
+              <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl font-[grifterbold]">
                 Your All-in-One <br /> <span className="text-primary">Finance</span>Companion.
               </h1>
-              <p className="md:max-w-2xl w-[320px] md:w-full mx-auto text-sm md:text-lg text-black font-medium font-[inter]">
+              <p className="md:max-w-2xl w-[320px] md:w-full mx-auto text-sm md:text-lg text-muted-foreground font-medium font-[inter]">
               A smarter way to manage your money—track, split, and analyze your expenses effortlessly.
               </p>
 
-              <div className="rounded-full bg-black hover:bg-black/80 transition-all duration-200 px-6 py-3 h-[40px] md:h-[50px] font-medium text-[14px] md:text-lg font-[inter] text-white cursor-pointer flex items-center justify-center gap-3">
+              <div className="rounded-full bg-primary hover:bg-primary/90 transition-all duration-200 px-6 py-3 h-[40px] md:h-[50px] font-medium text-[14px] md:text-lg font-[inter] text-primary-foreground cursor-pointer flex items-center justify-center gap-3">
                 <p>Get into Whitelist</p> <FaArrowRight />
               </div>
             </div>
@@ -76,7 +76,7 @@ export default function Home() {
         <section className="py-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl font-[grifterbold]">
+              <h2 className="text-3xl font-bold text-foreground sm:text-4xl font-[grifterbold]">
               Track your Expenses in a whole new way
               </h2>
             </div>
@@ -87,10 +87,10 @@ export default function Home() {
                 <div className="h-12 w-12 rounded-md bg-indigo-600 flex items-center justify-center">
                   {/* Add icon here */}
                 </div>
-                <h3 className="mt-6 text-xl font-semibold text-gray-900">
+                <h3 className="mt-6 text-xl font-semibold text-foreground">
                   Feature 1
                 </h3>
-                <p className="mt-2 text-center text-gray-500">
+                <p className="mt-2 text-center text-muted-foreground">
                   Description of feature 1 and its benefits.
                 </p>
               </div>
@@ -100,10 +100,10 @@ export default function Home() {
                 <div className="h-12 w-12 rounded-md bg-indigo-600 flex items-center justify-center">
                   {/* Add icon here */}
                 </div>
-                <h3 className="mt-6 text-xl font-semibold text-gray-900">
+                <h3 className="mt-6 text-xl font-semibold text-foreground">
                   Feature 2
                 </h3>
-                <p className="mt-2 text-center text-gray-500">
+                <p className="mt-2 text-center text-muted-foreground">
                   Description of feature 2 and its benefits.
                 </p>
               </div>
@@ -113,10 +113,10 @@ export default function Home() {
                 <div className="h-12 w-12 rounded-md bg-indigo-600 flex items-center justify-center">
                   {/* Add icon here */}
                 </div>
-                <h3 className="mt-6 text-xl font-semibold text-gray-900">
+                <h3 className="mt-6 text-xl font-semibold text-foreground">
                   Feature 3
                 </h3>
-                <p className="mt-2 text-center text-gray-500">
+                <p className="mt-2 text-center text-muted-foreground">
                   Description of feature 3 and its benefits.
                 </p>
               </div>
@@ -146,7 +146,7 @@ export default function Home() {
         {/* Footer */}
         <footer className="py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center text-gray-500">
+            <div className="text-center text-muted-foreground">
               <p>© 2025 Finova. All rights reserved.</p>
             </div>
           </div>

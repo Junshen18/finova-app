@@ -20,6 +20,11 @@ export const navItems = [
     icon: "WalletIcon",
   },
   {
+    name: "AI Analysis",
+    href: "/protected/ai-analysis",
+    icon: "SparklesIcon",
+  },
+  {
     name: "Account",
     href: "/protected/account",
     icon: "UserCircleIcon",
