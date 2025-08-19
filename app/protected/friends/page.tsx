@@ -7,9 +7,10 @@ import { createClient } from "@/lib/supabase/client";
 import FriendList, { Friend } from "@/components/friends/friend-list";
 import FriendRequests, { FriendRequest } from "@/components/friends/friend-request";
 import FriendRequestModal from "@/components/friends/friend-request-modal";
-import { FaQrcode, FaXmark } from "react-icons/fa6";
+import { FaQrcode, FaXmark, FaUserPlus } from "react-icons/fa6";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import CreateGroup from "@/components/create-group";
 
 export default function FriendsPage() {
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -101,7 +102,7 @@ export default function FriendsPage() {
   };
 
   return (
-    <div className="max-w-xl w-full mx-auto py-8 px-6 gap-4 flex flex-col">
+    <div className="max-w-xl w-full mx-auto py-8 px-6 gap-4 flex flex-col ">
       <Toaster />
       <div className="flex justify-between items-center ">
         <Link href="/protected/dashboard">
@@ -112,7 +113,12 @@ export default function FriendsPage() {
           <FaQrcode className="text-2xl cursor-pointer" />
 
       </div>
-      <Button onClick={() => setShowModal(true)} className="">Send Friend Request</Button>
+      <div className="flex gap-2">
+        <Button onClick={() => setShowModal(true)} className="" title="Send Friend Request" aria-label="Send Friend Request">
+          <FaUserPlus className="text-xl" /> Send Friend Request
+        </Button>
+        <CreateGroup onCreated={fetchFriendsAndRequests} iconOnly />
+      </div>
       <div className="flex flex-col gap-4 bg-foreground/5 rounded-lg p-4 justify-center items-center">
       {loading ? (
         <p>Loading...</p>

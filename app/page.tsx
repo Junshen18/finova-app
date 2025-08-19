@@ -1,12 +1,24 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PlatformModal from "@/components/platform-modal";
 import { FaArrowRight } from "react-icons/fa6";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [modalOpen, setModalOpen] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        router.replace("/protected/dashboard");
+      }
+    });
+  }, [router]);
 
   return (
     <div className="min-h-screen">

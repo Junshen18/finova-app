@@ -205,7 +205,7 @@ export default function AIAnalysisPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground pt-6 px-4 md:ml-64">
+    <div className="flex min-h-screen bg-background text-foreground pt-6 px-4">
       <div className="flex flex-col items-start justify-start w-full h-full gap-6 max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex flex-row items-center justify-between w-full">

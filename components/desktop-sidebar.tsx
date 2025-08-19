@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { UserCircleIcon, HomeIcon, ListBulletIcon, Cog6ToothIcon, WalletIcon, UserGroupIcon, SparklesIcon } from "@heroicons/react/24/outline";
+import { UserCircleIcon, HomeIcon, ListBulletIcon, Cog6ToothIcon, WalletIcon, UserGroupIcon, SparklesIcon, PuzzlePieceIcon } from "@heroicons/react/24/outline";
 import { NotificationBadge } from "@/components/notification-badge";
 import { usePathname } from "next/navigation";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -22,7 +22,8 @@ export function DesktopSidebar({ profile }: { profile: any }) {
     { href: "/protected/budget", label: "Budget", icon: WalletIcon },
     { href: "/protected/ai-analysis", label: "AI Analysis", icon: SparklesIcon },
     { href: "/protected/friends", label: "Friends", icon: UserGroupIcon },
-    { href: "/protected/account", label: "Settings", icon: Cog6ToothIcon },
+    { href: "/protected/games", label: "Games", icon: PuzzlePieceIcon },
+    { href: "/protected/settings", label: "Settings", icon: Cog6ToothIcon },
   ];
 
   const adminItems = profile?.role === 'admin' ? [
@@ -93,7 +94,13 @@ export function DesktopSidebar({ profile }: { profile: any }) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="min-w-[180px] w-[208px]">
           <DropdownMenuItem asChild>
-            <Link href="/protected/account">Subscription</Link>
+            <Link href="/protected/profile">Profile</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/protected/subscription">Subscription</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/protected/settings">Settings</Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={async () => { const supabase = createClient(); await supabase.auth.signOut(); window.location.href = '/auth/login'; }}>
