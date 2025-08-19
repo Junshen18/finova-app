@@ -3,6 +3,8 @@ import Image from "next/image";
 import { UserCircleIcon, HomeIcon, ListBulletIcon, Cog6ToothIcon, WalletIcon, UserGroupIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import { NotificationBadge } from "@/components/notification-badge";
 import { usePathname } from "next/navigation";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { createClient } from "@/lib/supabase/client";
 
 interface NavItem {
   href: string;
@@ -39,9 +41,9 @@ export function DesktopSidebar({ profile }: { profile: any }) {
           <Image
             src="/finova-white-logo.svg"
             alt="Finova"
-            width={120}
+            width={150}
             height={40}
-            className="w-24"
+            className="w-32"
           />
         </div>
         <nav className="flex flex-col gap-3">
@@ -77,15 +79,28 @@ export function DesktopSidebar({ profile }: { profile: any }) {
           })}
         </nav>
       </div>
-      <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 backdrop-blur-sm">
-        <div className="w-8 h-8 bg-[#E9FE52] rounded-full flex items-center justify-center shadow-lg">
-          <UserCircleIcon className="h-5 w-5 text-black" />
-        </div>
-        <div className="flex-1">
-          <p className="text-sm font-medium text-white">{profile?.display_name || 'User'}</p>
-          <p className="text-xs text-gray-400">Premium Member</p>
-        </div>
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 backdrop-blur-sm w-full text-left hover:bg-white/10">
+            <div className="w-8 h-8 bg-[#E9FE52] rounded-full flex items-center justify-center shadow-lg">
+              <UserCircleIcon className="h-5 w-5 text-black" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-white">{profile?.display_name || 'User'}</p>
+              <p className="text-xs text-gray-400">Premium Member</p>
+            </div>
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="min-w-[180px] w-[208px]">
+          <DropdownMenuItem asChild>
+            <Link href="/protected/account">Subscription</Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={async () => { const supabase = createClient(); await supabase.auth.signOut(); window.location.href = '/auth/login'; }}>
+            Log out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </aside>
   );
 } 
