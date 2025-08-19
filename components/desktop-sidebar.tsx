@@ -4,10 +4,17 @@ import { UserCircleIcon, HomeIcon, ListBulletIcon, Cog6ToothIcon, WalletIcon, Us
 import { NotificationBadge } from "@/components/notification-badge";
 import { usePathname } from "next/navigation";
 
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  showBadge?: boolean;
+}
+
 export function DesktopSidebar({ profile }: { profile: any }) {
   const pathname = usePathname();
 
-  const navItems = [
+  const navItems: NavItem[] = [
     { href: "/protected", label: "Dashboard", icon: HomeIcon },
     { href: "/protected/transactions", label: "Transactions", icon: ListBulletIcon },
     { href: "/protected/budget", label: "Budget", icon: WalletIcon },
@@ -15,6 +22,15 @@ export function DesktopSidebar({ profile }: { profile: any }) {
     { href: "/protected/friends", label: "Friends", icon: UserGroupIcon },
     { href: "/protected/account", label: "Settings", icon: Cog6ToothIcon },
   ];
+
+  const adminItems = profile?.role === 'admin' ? [
+    { 
+      href: "/protected/admin/applications", 
+      label: "Professional Applications", 
+      icon: UserGroupIcon,
+      showBadge: true 
+    },
+  ] : [];
 
   return (
     <aside className="hidden fixed md:flex w-64 bg-black text-white flex-col justify-between px-6 py-8 h-screen">
@@ -29,7 +45,7 @@ export function DesktopSidebar({ profile }: { profile: any }) {
           />
         </div>
         <nav className="flex flex-col gap-3">
-          {navItems.map((item) => {
+          {[...navItems, ...adminItems].map((item) => {
             // Check if current path matches this item's href
             const isActive = pathname === item.href || 
               (item.href === "/protected" && pathname === "/protected/dashboard") ||
@@ -48,11 +64,14 @@ export function DesktopSidebar({ profile }: { profile: any }) {
                 <item.icon className={`h-5 w-5 ${
                   isActive ? 'text-black' : 'text-white group-hover:text-[#E9FE52]'
                 }`} />
-                <span className={`font-medium ${
-                  isActive ? 'text-black' : 'text-white'
-                }`}>
-                  {item.label}
-                </span>
+                <div className="flex items-center flex-1">
+                  <span className={`font-medium ${
+                    isActive ? 'text-black' : 'text-white'
+                  }`}>
+                    {item.label}
+                  </span>
+                  {item.showBadge && <NotificationBadge />}
+                </div>
               </Link>
             );
           })}

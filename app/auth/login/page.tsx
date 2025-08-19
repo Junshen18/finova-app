@@ -13,6 +13,12 @@ export default function Page() {
         <p className="text-zinc-800 text-center mb-6">Log in or sign up to get started.</p>
 
         <LoginForm />
+        <div className="text-sm text-gray-500 mt-2">
+          Don't have an account?{" "}
+          <Link href="/auth/sign-up" className="underline underline-offset-4 hover:opacity-80">
+            Sign up
+          </Link>
+        </div>
       </div>
       {/* Footer Links */}
       <div className="absolute bottom-10 flex gap-2 mt-8 text-xs text-gray-400">
