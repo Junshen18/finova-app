@@ -4,9 +4,11 @@ import { Card, CardContent } from "./ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar } from "./ui/calendar";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "./ui/input";
 import { SelectionModal } from "./selection-modal";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
 interface AddIncomeFormProps {
   onCancel?: () => void;
@@ -21,6 +23,7 @@ export function AddIncomeForm({ onCancel }: AddIncomeFormProps) {
     const [accountModalOpen, setAccountModalOpen] = useState(false);
 
     const [form, setForm] = useState({
+        user_id: "",
         date: date.toISOString(),
         amount: "",
         category: "",
@@ -40,10 +43,99 @@ export function AddIncomeForm({ onCancel }: AddIncomeFormProps) {
         }));
     };
 
+    useEffect(() => {
+        async function init() {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            const userId = user?.id;
+            setForm(prev => ({ ...prev, user_id: userId || "" }));
+            await Promise.all([
+                fetchIncomeCategories(userId || undefined),
+                fetchAccounts(userId || undefined),
+            ]);
+        }
+        init();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    async function fetchIncomeCategories(userId?: string) {
+        const supabase = createClient();
+        let query = supabase
+            .from("income_categories")
+            .select("id, name, is_default");
+
+        if (userId) {
+            query = query.or(`user_id.eq.${userId},is_default.eq.true`);
+        } else {
+            query = query.eq("is_default", true);
+        }
+
+        query = query.order("is_default", { ascending: false }).order("name", { ascending: true });
+
+        const { data } = await query;
+        if (data) setCategories(data as any);
+    }
+
+    async function fetchAccounts(userId?: string) {
+        const supabase = createClient();
+        let query = supabase
+            .from("account_categories")
+            .select("id, user_id, name, is_default");
+
+        if (userId) {
+            query = query.or(`user_id.eq.${userId},is_default.eq.true`);
+        } else {
+            query = query.eq("is_default", true);
+        }
+
+        query = query.order("name", { ascending: true });
+
+        const { data } = await query;
+        if (data) setAccounts(data as any);
+    }
+
+    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        try {
+            if (!form.user_id || !form.amount || !form.date || !form.category_id) {
+                toast.error("Please fill in date, amount and category");
+                return;
+            }
+            const res = await fetch("/api/income", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    user_id: form.user_id,
+                    date: form.date,
+                    amount: parseFloat(form.amount),
+                    category_id: form.category_id,
+                    account_id: form.account_id ? parseInt(form.account_id) : undefined,
+                    description: form.description,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.error || "Failed to add income");
+            toast.success("Income added successfully");
+            setForm(prev => ({
+                ...prev,
+                date: new Date().toISOString(),
+                amount: "",
+                category: "",
+                category_id: "",
+                account_id: "",
+                account_name: "",
+                description: "",
+            }));
+            onCancel?.();
+        } catch (err: any) {
+            toast.error(err?.message || "Failed to add income");
+        }
+    }
+
     return (
         <Card className="border-0 shadow-sm bg-form-bg">
             <CardContent className="p-4 md:p-6">
-                <div className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Date */}
                     <div>
                         <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
@@ -143,7 +235,7 @@ export function AddIncomeForm({ onCancel }: AddIncomeFormProps) {
                             </Button>
                         )}
                     </div>
-                </div>
+                </form>
             </CardContent>
 
             {/* Category Modal */}

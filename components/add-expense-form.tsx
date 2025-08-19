@@ -239,6 +239,7 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
       const data = await res.json();
 
       if (res.ok) {
+        onCancel?.();
         toast.success("Expense added successfully");
         setFile(null);
         // Reset form
