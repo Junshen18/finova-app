@@ -70,6 +70,7 @@ export default function GroupDetailPage() {
   const [settleTargetUserId, setSettleTargetUserId] = useState<string>("");
   const [settleAmount, setSettleAmount] = useState<string>("");
   const [settleNote, setSettleNote] = useState<string>("");
+  const [authorized, setAuthorized] = useState<boolean | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -77,6 +78,22 @@ export default function GroupDetailPage() {
       const supabase = createClient();
       const { data: auth } = await supabase.auth.getUser();
       if (auth.user?.id) setCurrentUserId(auth.user.id);
+      // membership check: only allow members of the group to proceed
+      if (auth.user?.id) {
+        const { data: memCheck, error: memCheckError } = await supabase
+          .from("split_group_member")
+          .select("user_id")
+          .eq("group_id", groupId)
+          .eq("user_id", auth.user.id);
+        if (!memCheckError && (!memCheck || memCheck.length === 0)) {
+          setAuthorized(false);
+          toast.error("You do not have access to this group");
+          router.replace("/protected/groups");
+          setLoading(false);
+          return;
+        }
+        setAuthorized(true);
+      }
       // categories (default + user)
       if (auth.user?.id) {
         const { data: cats } = await supabase

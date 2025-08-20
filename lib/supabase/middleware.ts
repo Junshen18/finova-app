@@ -57,6 +57,28 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Authorization gate: only members can access a group's page
+  if (user && request.nextUrl.pathname.startsWith("/protected/groups/")) {
+    const match = request.nextUrl.pathname.match(/^\/protected\/groups\/(\d+)/);
+    if (match) {
+      const groupId = Number(match[1]);
+      if (Number.isFinite(groupId)) {
+        const { data: membership, error: membershipError } = await supabase
+          .from("split_group_member")
+          .select("user_id")
+          .eq("group_id", groupId)
+          .eq("user_id", user.id)
+          .limit(1);
+
+        if (!membershipError && (!membership || membership.length === 0)) {
+          const url = request.nextUrl.clone();
+          url.pathname = "/protected/groups";
+          return NextResponse.redirect(url);
+        }
+      }
+    }
+  }
+
   // IMPORTANT: You *must* return the supabaseResponse object as it is.
   // If you're creating a new response object with NextResponse.next() make sure to:
   // 1. Pass the request in it, like so:
