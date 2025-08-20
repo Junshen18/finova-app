@@ -21,7 +21,7 @@ export function DesktopSidebar({ profile }: { profile: any }) {
     { href: "/protected/transactions", label: "Transactions", icon: ListBulletIcon },
     { href: "/protected/budget", label: "Budget", icon: WalletIcon },
     { href: "/protected/ai-analysis", label: "AI Analysis", icon: SparklesIcon },
-    { href: "/protected/friends", label: "Friends", icon: UserGroupIcon },
+    { href: "/protected/groups", label: "Groups", icon: UserGroupIcon },
     { href: "/protected/games", label: "Games", icon: PuzzlePieceIcon },
     { href: "/protected/settings", label: "Settings", icon: Cog6ToothIcon },
   ];
