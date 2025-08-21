@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { EllipsisHorizontalIcon, CheckBadgeIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
@@ -62,6 +63,7 @@ export default function GroupDetailPage() {
   // view/edit expense modal
   const [viewOpen, setViewOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<{ id: number; user_id: string; amount: number; description: string; date: string } | null>(null);
+  const [selectedExpenseSplits, setSelectedExpenseSplits] = useState<{ user_id: string; amount: number }[]>([]);
   const [isEditingExpense, setIsEditingExpense] = useState(false);
   const [editExpenseAmount, setEditExpenseAmount] = useState<string>("");
   const [editExpenseDesc, setEditExpenseDesc] = useState<string>("");
@@ -521,6 +523,11 @@ export default function GroupDetailPage() {
                         setSelectedExpense(data as any);
                         setEditExpenseAmount(String((data as any).amount));
                         setEditExpenseDesc((data as any).description || "");
+                        const { data: splitRows } = await supabase
+                          .from("expense_splits")
+                          .select("user_id, amount")
+                          .eq("expense_id", (data as any).id);
+                        setSelectedExpenseSplits((splitRows || []).map((s: any) => ({ user_id: s.user_id, amount: Number(s.amount || 0) })));
                         setViewOpen(true);
                         setIsEditingExpense(false);
                       } catch (err: any) {
@@ -669,6 +676,17 @@ export default function GroupDetailPage() {
             <Button type="button" className="w-full bg-form-bg text-foreground border-form-border border justify-start px-3 py-2 hover:bg-form-hover" onClick={() => setCategoryModalOpen(true)}>
               {selectedCategoryName || "Select Category"}
             </Button>
+
+            {/* Note (optional) */}
+            <div>
+              <label className="text-sm">Note (optional)</label>
+              <Textarea
+                value={billDesc}
+                onChange={(e) => setBillDesc(e.target.value)}
+                className="mt-1 bg-form-bg text-foreground border-form-border min-h-[80px]"
+                placeholder="What is this bill for?"
+              />
+            </div>
 
             {/* Paid by */}
             <div>
@@ -928,6 +946,25 @@ export default function GroupDetailPage() {
                   <div>${Number(selectedExpense.amount).toFixed(2)}</div>
                 )}
     </div>
+
+              {selectedExpenseSplits.length > 0 && !isEditingExpense && (
+                <div>
+                  <span className="text-muted-foreground block mb-1">Split</span>
+                  <ul className="space-y-1">
+                    {selectedExpenseSplits.map((s) => {
+                      const member = members.find((m) => m.user_id === s.user_id);
+                      const label = s.user_id === currentUserId ? "You" : (member?.display_name || "Member");
+                      const labelClass = s.user_id === currentUserId ? "font-medium" : undefined;
+                      return (
+                        <li key={s.user_id} className="flex items-center justify-between">
+                          <span className={labelClass}>{label}</span>
+                          <span>${s.amount.toFixed(2)}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
 
               <div className="flex gap-2 pt-1">
                 {!isEditingExpense ? (

@@ -19,8 +19,8 @@ export default async function DashboardPage() {
     }
     
     return (
-        <div className="flex min-h-screen bg-background text-foreground ">
-            <div className="flex flex-col w-full ">
+        <div className="flex min-h-screen w-full justify-center items-center bg-background text-foreground">
+            <div className="flex flex-col">
                 <div className="flex flex-col items-start justify-start max-w-7xl h-full gap-6 p-4 md:p-6 lg:p-8">
                     <MainHeader profile={profile} />
                     
