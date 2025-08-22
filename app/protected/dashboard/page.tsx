@@ -11,6 +11,7 @@ import Sidebar from "@/components/side-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Suspense } from "react";
 import { OweSummary } from "@/components/owe-summary";
+import { MonthlyTrend } from "@/components/monthly-trend";
 
 export default async function DashboardPage() {
     const supabase = await createClient();
@@ -22,7 +23,7 @@ export default async function DashboardPage() {
     }
     
     return (
-        <div className="flex min-h-screen w-full justify-center items-center bg-background text-foreground">
+        <div className="flex min-h-screen w-full justify-center items-start bg-background text-foreground">
             <div className="flex flex-col">
                 <div className="flex flex-col items-start justify-start max-w-7xl h-full gap-6 p-4 md:p-6 lg:p-8">
                     <MainHeader profile={profile} />
@@ -35,12 +36,17 @@ export default async function DashboardPage() {
                         </div>
                         
                         {/* Stats Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
                             <DashboardStats />
+                        </div>
+
+                        {/* 6-Month Trend */}
+                        <div className="mb-8">
+                          <MonthlyTrend />
                         </div>
                         
                         {/* Content Grid */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
                             {/* Recent Transactions */}
                             <div className="lg:col-span-2">
                                 <RecentTransactions />

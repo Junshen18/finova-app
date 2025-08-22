@@ -36,9 +36,15 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
   const streamRef = useRef<MediaStream | null>(null);
   const [file, setFile] = useState<File | null>(null);
 
+  const toIsoAtNoon = (d: Date) => {
+    const copy = new Date(d);
+    copy.setHours(12, 0, 0, 0);
+    return copy.toISOString();
+  };
+
   const [form, setForm] = useState({
     user_id: "",
-    date: date.toISOString(),
+    date: toIsoAtNoon(date),
     amount: "",
     category: "",
     category_id: "",
@@ -94,6 +100,11 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
       }
     };
   }, [cameraModalOpen]);
+
+  // keep form.date in sync with calendar selection (use noon to avoid timezone shift)
+  useEffect(() => {
+    setForm(prev => ({ ...prev, date: toIsoAtNoon(date) }));
+  }, [date]);
 
   async function fetchCategories(userId: string) {
     const supabase = createClient();

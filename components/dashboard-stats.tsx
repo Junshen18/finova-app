@@ -8,8 +8,7 @@ import { Skeleton } from "./ui/skeleton";
 export function DashboardStats() {
   const [incomeThisMonth, setIncomeThisMonth] = useState(0);
   const [expenseThisMonth, setExpenseThisMonth] = useState(0);
-  const [incomeLastMonth, setIncomeLastMonth] = useState(0);
-  const [expenseLastMonth, setExpenseLastMonth] = useState(0);
+  // Removed last month cards; will show 6-month trend separately
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,17 +24,14 @@ export function DashboardStats() {
       const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0).toISOString();
 
       // Income sums
-      const [{ data: incThis }, { data: incLast }] = await Promise.all([
+      const [{ data: incThis }] = await Promise.all([
         supabase.from("income_transactions").select("amount,date").eq("user_id", user.id).gte("date", startOfThisMonth),
-        supabase.from("income_transactions").select("amount,date").eq("user_id", user.id).gte("date", startOfLastMonth).lte("date", endOfLastMonth),
       ]);
       const incomeT = (incThis || []).reduce((s, r: any) => s + Number(r.amount || 0), 0);
-      const incomeL = (incLast || []).reduce((s, r: any) => s + Number(r.amount || 0), 0);
 
       // Expenses sums with split handling
-      const [{ data: expThis }, { data: expLast }] = await Promise.all([
+      const [{ data: expThis }] = await Promise.all([
         supabase.from("expense_transactions").select("id,amount,is_split_bill,date").eq("user_id", user.id).gte("date", startOfThisMonth),
-        supabase.from("expense_transactions").select("id,amount,is_split_bill,date").eq("user_id", user.id).gte("date", startOfLastMonth).lte("date", endOfLastMonth),
       ]);
 
       const computeExpense = async (rows: any[]) => {
@@ -48,15 +44,12 @@ export function DashboardStats() {
         return rows.reduce((sum, r: any) => sum + (r.is_split_bill ? (map[r.id] ?? Number(r.amount || 0)) : Number(r.amount || 0)), 0);
       };
 
-      const [expT, expL] = await Promise.all([
+      const [expT] = await Promise.all([
         computeExpense(expThis || []),
-        computeExpense(expLast || []),
       ]);
 
       setIncomeThisMonth(incomeT);
-      setIncomeLastMonth(incomeL);
       setExpenseThisMonth(expT);
-      setExpenseLastMonth(expL);
       setLoading(false);
     })();
   }, []);
@@ -79,24 +72,8 @@ export function DashboardStats() {
         color: "bg-red-100 text-red-700",
         iconBg: "bg-red-500",
       },
-      {
-        title: "Income (Last Month)",
-        amount: `RM ${incomeLastMonth.toFixed(2)}`,
-        change: "",
-        icon: FaCreditCard,
-        color: "bg-blue-100 text-blue-700",
-        iconBg: "bg-blue-500",
-      },
-      {
-        title: "Expenses (Last Month)",
-        amount: `RM ${expenseLastMonth.toFixed(2)}`,
-        change: "",
-        icon: FaPiggyBank,
-        color: "bg-violet-100 text-violet-700",
-        iconBg: "bg-violet-500",
-      },
     ];
-  }, [incomeThisMonth, expenseThisMonth, incomeLastMonth, expenseLastMonth]);
+  }, [incomeThisMonth, expenseThisMonth]);
 
   return (
     <>
@@ -105,19 +82,23 @@ export function DashboardStats() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-300 mb-1">{stat.title}</p>
-                <p className="text-xl font-bold text-white">{loading ? <Skeleton className="h-6 w-28" /> : stat.amount}</p>
+                <p className="text-sm font-medium text-gray-300 mb-1">{loading ? <Skeleton className="h-3 w-32" /> : stat.title}</p>
+                <p className="text-xl font-bold text-white">{loading ? <Skeleton className="h-7 w-32 rounded-lg" /> : stat.amount}</p>
                 {stat.change && (
                   <div className="flex items-center gap-1 mt-1">
-                    <span className={`text-xs font-semibold ${stat.color} px-2 py-1 rounded-full`}>
-                      {stat.change}
-                    </span>
+                    {loading ? <Skeleton className="h-5 w-16 rounded-full" /> : (
+                      <span className={`text-xs font-semibold ${stat.color} px-2 py-1 rounded-full`}>
+                        {stat.change}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
-              <div className={`p-3 rounded-full ${stat.iconBg} text-white shadow-lg`}>
-                <stat.icon className="w-5 h-5" />
-              </div>
+              {loading ? <Skeleton className="h-10 w-10 rounded-full" /> : (
+                <div className={`p-3 rounded-full ${stat.iconBg} text-white shadow-lg`}>
+                  <stat.icon className="w-5 h-5" />
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

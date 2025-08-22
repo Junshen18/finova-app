@@ -62,7 +62,7 @@ export function RecentTransactions() {
   }, []);
 
   return (
-    <Card className="border-0 shadow-sm bg-white/5 backdrop-blur-sm">
+    <Card className="border-0 shadow-sm bg-white/5 backdrop-blur-sm h-full">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold text-white">Recent Transactions</CardTitle>
@@ -71,19 +71,19 @@ export function RecentTransactions() {
           </button>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 text-sm">
         {loading ? (
           Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex items-center justify-between p-3">
+            <div key={i} className="flex items-center justify-between p-3 rounded-lg border border-white/5">
               <div className="flex items-center gap-3">
                 <Skeleton className="h-8 w-8 rounded-full" />
                 <div>
-                  <Skeleton className="h-4 w-40 mb-1" />
-                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-4 w-36 mb-1" />
+                  <Skeleton className="h-3 w-20" />
                 </div>
               </div>
               <div className="text-right">
-                <Skeleton className="h-4 w-24 mb-1" />
+                <Skeleton className="h-4 w-20 mb-1" />
                 <Skeleton className="h-3 w-16" />
               </div>
             </div>
@@ -104,17 +104,17 @@ export function RecentTransactions() {
                 )}
               </div>
               <div>
-                <p className="font-medium text-white">{transaction.title}</p>
-                <p className="text-sm text-gray-300">{transaction.category}</p>
+                <p className="font-medium text-white text-[13px] leading-tight">{transaction.title}</p>
+                <p className="text-xs text-gray-300">{transaction.category}</p>
               </div>
             </div>
             <div className="text-right">
-              <p className={`font-semibold ${
+              <p className={`font-semibold text-sm ${
                 transaction.type === 'income' ? 'text-emerald-400' : transaction.type === 'expense' ? 'text-red-400' : 'text-blue-400'
               }`}>
                 {transaction.type === 'income' ? '+' : transaction.type === 'expense' ? '-' : ''}RM {Math.abs(transaction.amount).toFixed(2)}
               </p>
-              <p className="text-xs text-gray-400">{transaction.date}</p>
+              <p className="text-[10px] text-gray-400">{transaction.date}</p>
             </div>
           </div>
         ))

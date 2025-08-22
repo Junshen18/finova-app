@@ -53,7 +53,7 @@ export function SpendingInsights() {
   })), [rows, total]);
 
   return (
-    <Card className="border-0 shadow-sm bg-white/5 backdrop-blur-sm">
+    <Card className="border-0 shadow-sm bg-white/5 backdrop-blur-sm h-full">
       <CardHeader className="pb-4">
         <CardTitle className="text-lg font-semibold text-white">Spending by Category</CardTitle>
       </CardHeader>
@@ -64,12 +64,14 @@ export function SpendingInsights() {
               <div className="flex items-center gap-3">
                 <Skeleton className="h-8 w-8 rounded-full" />
                 <div>
-                  <Skeleton className="h-4 w-40 mb-1" />
+                  <Skeleton className="h-4 w-36 mb-1" />
                   <Skeleton className="h-3 w-16" />
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Skeleton className="h-2 w-16 rounded-full" />
+              <div className="flex items-center gap-2 w-28">
+                <div className="w-full bg-gray-700 rounded-full h-2">
+                  <Skeleton className="h-2 w-full rounded-full" />
+                </div>
                 <Skeleton className="h-3 w-6" />
               </div>
             </div>

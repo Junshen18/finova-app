@@ -61,7 +61,7 @@ export default function BalanceCard() {
             }}
             className="text-sm font-semibold opacity-90 flex flex-row items-center gap-1 cursor-pointer select-none text-black hover:opacity-100 transition-opacity"
           >
-            Total Balance {" "}
+            {loading ? <Skeleton className="h-3 w-24" /> : <>Total Balance</>} {" "}
             <FaAngleUp
               className={`text-base ${
                 isOpen ? "rotate-180" : ""

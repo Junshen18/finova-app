@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FaArrowUp, FaArrowDown, FaExchangeAlt, FaFilter, FaSearch, FaWallet } from "react-icons/fa";
+import { FaArrowUp, FaArrowDown, FaExchangeAlt, FaFilter, FaSearch, FaWallet, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { createClient } from "@/lib/supabase/client";
 
 type Transaction = {
@@ -24,6 +24,10 @@ export default function TransactionsPage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState<Date>(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -159,9 +163,13 @@ export default function TransactionsPage() {
 
   // Get unique categories for current type
   const categories = useMemo(() => {
-    const source = filterType === "all" ? transactions : transactions.filter(t => t.type === filterType);
+    const inMonth = transactions.filter(t => {
+      const d = new Date(t.date);
+      return d.getFullYear() === selectedMonth.getFullYear() && d.getMonth() === selectedMonth.getMonth();
+    });
+    const source = filterType === "all" ? inMonth : inMonth.filter(t => t.type === filterType);
     return Array.from(new Set(source.map(t => t.category)));
-  }, [transactions, filterType]);
+  }, [transactions, filterType, selectedMonth]);
 
   // Filter transactions based on current filters
   const filteredTransactions = useMemo(() => {
@@ -174,14 +182,16 @@ export default function TransactionsPage() {
       const tCat = (t.category || "").trim().toLowerCase();
       const tTitle = (t.title || "").toLowerCase();
       const tDesc = (t.description || "").toLowerCase();
+      const d = new Date(t.date);
+      const inMonth = d.getFullYear() === selectedMonth.getFullYear() && d.getMonth() === selectedMonth.getMonth();
 
       const matchesType = typeFilter === "all" || tType === typeFilter;
       const matchesCategory = categoryFilter === "all" || tCat === categoryFilter;
       const matchesSearch = query === "" || tTitle.includes(query) || tDesc.includes(query);
 
-      return matchesType && matchesCategory && matchesSearch;
+      return inMonth && matchesType && matchesCategory && matchesSearch;
     });
-  }, [transactions, filterType, filterCategory, searchQuery]);
+  }, [transactions, filterType, filterCategory, searchQuery, selectedMonth]);
 
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -224,8 +234,8 @@ export default function TransactionsPage() {
     }
   };
 
-  const totalIncome = useMemo(() => transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0), [transactions]);
-  const totalExpenses = useMemo(() => transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + (t.amount || 0), 0), [transactions]);
+  const totalIncome = useMemo(() => filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0), [filteredTransactions]);
+  const totalExpenses = useMemo(() => filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + (t.amount || 0), 0), [filteredTransactions]);
   const totalBalance = useMemo(() => totalIncome - totalExpenses, [totalIncome, totalExpenses]);
 
   return (
@@ -233,7 +243,28 @@ export default function TransactionsPage() {
       <div className="flex flex-col items-start justify-start w-full h-full gap-6 max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex flex-row items-center justify-between w-full">
-          <h1 className="text-2xl font-bold">Transactions History</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold">Transactions History</h1>
+            <div className="flex items-center gap-2 bg-white/5 rounded-md px-2 py-1">
+              <button
+                aria-label="Previous month"
+                className="p-1 rounded hover:bg-white/10"
+                onClick={() => setSelectedMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
+              >
+                <FaChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-sm text-white/90 min-w-[9rem] text-center">
+                {selectedMonth.toLocaleString(undefined, { month: 'long', year: 'numeric' })}
+              </span>
+              <button
+                aria-label="Next month"
+                className="p-1 rounded hover:bg-white/10"
+                onClick={() => setSelectedMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
+              >
+                <FaChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm">
               <FaFilter className="w-4 h-4 mr-2" />
