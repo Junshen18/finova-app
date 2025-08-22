@@ -14,6 +14,7 @@ export async function POST(request: Request) {
       img_url,
       is_split_bill,
       group_id,
+      client_request_id,
     } = body;
 
     // Basic validation
@@ -22,6 +23,23 @@ export async function POST(request: Request) {
     }
 
     const supabase = await createClient();
+
+    // Simple idempotency: reject duplicate requests with same user/date/amount/category/description within 10 seconds
+    if (client_request_id) {
+      const since = new Date(Date.now() - 10_000).toISOString();
+      const { data: dupCheck } = await supabase
+        .from("expense_transactions")
+        .select("id")
+        .eq("user_id", user_id)
+        .gte("date", since)
+        .eq("amount", amount)
+        .eq("category", category)
+        .eq("description", description || null)
+        .limit(1);
+      if ((dupCheck || []).length > 0) {
+        return NextResponse.json({ error: "Duplicate request detected" }, { status: 409 });
+      }
+    }
     const { data, error } = await supabase.from("expense_transactions").insert([
       {
         user_id,

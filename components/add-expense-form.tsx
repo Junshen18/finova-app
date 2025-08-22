@@ -209,6 +209,7 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
     setResult(null);
 
@@ -233,6 +234,7 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
           img_url: imgPath,
           account_id: form.account_id ? parseInt(form.account_id) : undefined,
           group_id: form.group_id ? parseInt(form.group_id) : undefined,
+          client_request_id: Date.now(),
         }),
       });
 

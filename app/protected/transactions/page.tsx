@@ -25,90 +25,131 @@ export default function TransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setTransactions([]);
-        setLoading(false);
-        return;
-      }
-
-      // Fetch categories for mapping
-      const [expCatsRes, incCatsRes] = await Promise.all([
-        supabase.from("expense_categories").select("id, name, is_default").or(`user_id.eq.${user.id},is_default.eq.true`),
-        supabase.from("income_categories").select("id, name, is_default").or(`user_id.eq.${user.id},is_default.eq.true`),
-      ]);
-      const expCatMap = new Map<number, string>((expCatsRes.data || []).map((c: any) => [c.id, c.name]));
-      const incCatMap = new Map<number, string>((incCatsRes.data || []).map((c: any) => [c.id, c.name]));
-
-      // Fetch transactions
-      const [expensesRes, incomesRes, transfersRes] = await Promise.all([
-        supabase.from("expense_transactions").select("id, amount, category, date, description, is_split_bill").eq("user_id", user.id).order("date", { ascending: false }),
-        supabase.from("income_transactions").select("id, amount, category_id, date, description").eq("user_id", user.id).order("date", { ascending: false }),
-        supabase.from("transfer_transactions").select("id, amount, date, description").eq("user_id", user.id).order("date", { ascending: false }),
-      ]);
-
-      // Split-bill: replace amount with user's own share when applicable
-      let splitAmountByExpenseId: Record<number, number> = {};
-      const splitExpenseIds = (expensesRes.data || []).filter((e: any) => e.is_split_bill).map((e: any) => e.id);
-      if (splitExpenseIds.length > 0) {
-        const { data: splits } = await supabase
-          .from("expense_splits")
-          .select("expense_id, amount")
-          .in("expense_id", splitExpenseIds)
-          .eq("user_id", user.id);
-        (splits || []).forEach((s: any) => { splitAmountByExpenseId[s.expense_id] = Number(s.amount || 0); });
-      }
-
-      const expTx: Transaction[] = (expensesRes.data || []).map((e: any) => {
-        const name = expCatMap.get(e.category as number) || "Expense";
-        const base = Number(e.amount || 0);
-        const amt = e.is_split_bill ? (splitAmountByExpenseId[e.id] ?? base) : base;
-        return {
-          id: e.id,
-          title: (e.description && String(e.description).trim().length > 0) ? String(e.description) : name,
-          amount: amt,
-          category: name,
-          date: e.date,
-          type: "expense" as const,
-          description: e.description || undefined,
-          status: "completed" as const,
-        };
-      });
-
-      const incTx: Transaction[] = (incomesRes.data || []).map((i: any) => {
-        const name = incCatMap.get(i.category_id as number) || "Income";
-        const title = (i.description && String(i.description).trim().length > 0) ? String(i.description) : name;
-        return {
-          id: i.id,
-          title,
-          amount: Number(i.amount || 0),
-          category: name,
-          date: i.date,
-          type: "income",
-          description: i.description || undefined,
-          status: "completed",
-        };
-      });
-
-      const trfTx: Transaction[] = (transfersRes.data || []).map((t: any) => ({
-        id: t.id,
-        title: (t.description && String(t.description).trim().length > 0) ? String(t.description) : "Transfer",
-        amount: Number(t.amount || 0),
-        category: "Transfer",
-        date: t.date,
-        type: "transfer",
-        description: t.description || undefined,
-        status: "completed",
-      }));
-
-      const all = [...expTx, ...incTx, ...trfTx].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      setTransactions(all);
+  const fetchTransactions = async () => {
+    setLoading(true);
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setTransactions([]);
       setLoading(false);
+      return;
+    }
+
+    // Fetch categories for mapping
+    const [expCatsRes, incCatsRes] = await Promise.all([
+      supabase.from("expense_categories").select("id, name, is_default").or(`user_id.eq.${user.id},is_default.eq.true`),
+      supabase.from("income_categories").select("id, name, is_default").or(`user_id.eq.${user.id},is_default.eq.true`),
+    ]);
+    const expCatMap = new Map<number, string>((expCatsRes.data || []).map((c: any) => [c.id, c.name]));
+    const incCatMap = new Map<number, string>((incCatsRes.data || []).map((c: any) => [c.id, c.name]));
+
+    // Fetch transactions
+    const [expensesRes, incomesRes, transfersRes] = await Promise.all([
+      supabase.from("expense_transactions").select("id, amount, category, date, description, is_split_bill, group_id").eq("user_id", user.id).order("date", { ascending: false }),
+      supabase.from("income_transactions").select("id, amount, category_id, date, description").eq("user_id", user.id).order("date", { ascending: false }),
+      supabase.from("transfer_transactions").select("id, amount, date, description").eq("user_id", user.id).order("date", { ascending: false }),
+    ]);
+
+    // Split-bill: replace amount with user's own share when applicable
+    let splitAmountByExpenseId: Record<number, number> = {};
+    const splitExpenseIds = (expensesRes.data || []).filter((e: any) => e.is_split_bill).map((e: any) => e.id);
+    if (splitExpenseIds.length > 0) {
+      const { data: splits } = await supabase
+        .from("expense_splits")
+        .select("expense_id, amount")
+        .in("expense_id", splitExpenseIds)
+        .eq("user_id", user.id);
+      (splits || []).forEach((s: any) => { splitAmountByExpenseId[s.expense_id] = Number(s.amount || 0); });
+    }
+
+    // If there are split-bill expenses, load their group names
+    let groupNameById: Record<number, string> = {};
+    const groupIds = Array.from(new Set((expensesRes.data || [])
+      .filter((e: any) => e.is_split_bill && e.group_id)
+      .map((e: any) => Number(e.group_id))));
+    if (groupIds.length > 0) {
+      const { data: groups } = await supabase
+        .from("split_groups")
+        .select("id, name")
+        .in("id", groupIds);
+      (groups || []).forEach((g: any) => { groupNameById[g.id] = g.name; });
+    }
+
+    const expTx: Transaction[] = (expensesRes.data || []).map((e: any) => {
+      const name = expCatMap.get(e.category as number) || "Expense";
+      const base = Number(e.amount || 0);
+      const amt = e.is_split_bill ? (splitAmountByExpenseId[e.id] ?? base) : base;
+      const isSplit = !!e.is_split_bill;
+      const groupName = isSplit && e.group_id ? (groupNameById[Number(e.group_id)] || "Split bill") : undefined;
+      const hasNote = e.description && String(e.description).trim().length > 0;
+      const title = isSplit ? (hasNote ? `${String(e.description)} • ${groupName}` : (groupName || name))
+                            : (hasNote ? String(e.description) : name);
+      return {
+        id: e.id,
+        title,
+        amount: amt,
+        category: name,
+        date: e.date,
+        type: "expense" as const,
+        description: isSplit ? undefined : (e.description || undefined),
+        status: "completed" as const,
+      };
+    });
+
+    const incTx: Transaction[] = (incomesRes.data || []).map((i: any) => {
+      const name = incCatMap.get(i.category_id as number) || "Income";
+      const title = (i.description && String(i.description).trim().length > 0) ? String(i.description) : name;
+      return {
+        id: i.id,
+        title,
+        amount: Number(i.amount || 0),
+        category: name,
+        date: i.date,
+        type: "income",
+        description: i.description || undefined,
+        status: "completed",
+      };
+    });
+
+    const trfTx: Transaction[] = (transfersRes.data || []).map((t: any) => ({
+      id: t.id,
+      title: (t.description && String(t.description).trim().length > 0) ? String(t.description) : "Transfer",
+      amount: Number(t.amount || 0),
+      category: "Transfer",
+      date: t.date,
+      type: "transfer",
+      description: t.description || undefined,
+      status: "completed",
+    }));
+
+    const all = [...expTx, ...incTx, ...trfTx].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    setTransactions(all);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
+
+  useEffect(() => {
+    const supabase = createClient();
+    let channel: any;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const refetch = () => { fetchTransactions(); };
+      channel = supabase
+        .channel('realtime-transactions')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'expense_transactions', filter: `user_id=eq.${user.id}` }, refetch)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'income_transactions', filter: `user_id=eq.${user.id}` }, refetch)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'transfer_transactions', filter: `user_id=eq.${user.id}` }, refetch);
+      channel.subscribe();
     })();
+    return () => {
+      if (channel) {
+        try { supabase.removeChannel(channel); } catch { /* noop */ }
+      }
+    };
   }, []);
 
   // Reset category when changing type

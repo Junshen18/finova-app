@@ -852,6 +852,29 @@ export default function GroupDetailPage() {
                   toast.success("Settlement recorded");
                   setSettleOpen(false);
 
+                  // Also create a personal expense transaction for the member who settled
+                  try {
+                    // Prefer user's own categories; fallback to a default one (e.g., Other)
+                    const { data: cats } = await supabase
+                      .from("expense_categories")
+                      .select("id, name, is_default")
+                      .or(`user_id.eq.${user.id},is_default.eq.true`)
+                      .order("is_default", { ascending: false })
+                      .order("name", { ascending: true });
+                    const other = (cats || []).find((c: any) => (c.name || "").toLowerCase() === "other");
+                    const fallback = other || (cats || [])[0];
+                    const categoryId = fallback ? parseInt(String(fallback.id)) : undefined;
+
+                    const payerName = members.find((m) => m.user_id === settleTargetUserId)?.display_name || "payer";
+                    const note = `to ${payerName} • ${groupName || "Group"}`;
+
+                    await supabase
+                      .from("expense_transactions")
+                      .insert([{ user_id: user.id, date: new Date().toISOString(), amount: amt, category: categoryId, description: note, is_split_bill: false, group_id: groupId }]);
+                  } catch(_) {
+                    // non-fatal: if this fails we still keep the settlement record
+                  }
+
                   // refresh activity
                   const { data: exps } = await supabase
                     .from("expense_transactions")

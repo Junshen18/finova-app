@@ -15,6 +15,7 @@ interface AddIncomeFormProps {
 }
 
 export function AddIncomeForm({ onCancel }: AddIncomeFormProps) {
+    const [loading, setLoading] = useState(false);
     const [date, setDate] = useState<Date>(new Date());
     const [calendarOpen, setCalendarOpen] = useState(false);
     const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
@@ -96,6 +97,8 @@ export function AddIncomeForm({ onCancel }: AddIncomeFormProps) {
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
+        if (loading) return;
+        setLoading(true);
         try {
             if (!form.user_id || !form.amount || !form.date || !form.category_id) {
                 toast.error("Please fill in date, amount and category");
@@ -111,6 +114,7 @@ export function AddIncomeForm({ onCancel }: AddIncomeFormProps) {
                     category_id: form.category_id,
                     account_id: form.account_id ? parseInt(form.account_id) : undefined,
                     description: form.description,
+                    client_request_id: Date.now(),
                 }),
             });
             const data = await res.json();
@@ -129,6 +133,8 @@ export function AddIncomeForm({ onCancel }: AddIncomeFormProps) {
             onCancel?.();
         } catch (err: any) {
             toast.error(err?.message || "Failed to add income");
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -220,9 +226,10 @@ export function AddIncomeForm({ onCancel }: AddIncomeFormProps) {
                         
                         <Button
                             type="submit"
+                            disabled={loading}
                             className="bg-[#E9FE52] text-black hover:bg-[#E9FE52]/90 font-semibold"
                         >
-                            Add Income
+                            {loading ? "Adding..." : "Add Income"}
                         </Button>
                         {onCancel && (
                             <Button

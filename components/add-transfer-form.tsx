@@ -15,6 +15,7 @@ interface AddTransferFormProps {
 }
 
 export function AddTransferForm({ onCancel }: AddTransferFormProps) {
+  const [loading, setLoading] = useState(false);
   const [date, setDate] = useState<Date>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
@@ -74,6 +75,8 @@ export function AddTransferForm({ onCancel }: AddTransferFormProps) {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (loading) return;
+    setLoading(true);
     try {
       if (!form.user_id || !form.amount || !form.date || !form.from_account_id || !form.to_account_id) {
         toast.error("Please fill date, amount, from and to accounts");
@@ -90,6 +93,7 @@ export function AddTransferForm({ onCancel }: AddTransferFormProps) {
           from_account_id: parseInt(form.from_account_id),
           to_account_id: parseInt(form.to_account_id),
           description: form.description,
+          client_request_id: Date.now(),
         }),
       });
       const data = await res.json();
@@ -109,6 +113,8 @@ export function AddTransferForm({ onCancel }: AddTransferFormProps) {
       onCancel?.();
     } catch (err: any) {
       toast.error(err?.message || "Failed to add transfer");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -199,9 +205,10 @@ export function AddTransferForm({ onCancel }: AddTransferFormProps) {
           <div className="flex flex-col gap-2 pt-4 justify-center">
             <Button
               type="submit"
+              disabled={loading}
               className="bg-[#E9FE52] text-black hover:bg-[#E9FE52]/90 font-semibold"
             >
-              Add Transfer
+              {loading ? "Adding..." : "Add Transfer"}
             </Button>
             {onCancel && (
               <Button
