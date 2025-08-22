@@ -357,7 +357,7 @@ export default function TransactionsPage() {
                 ) : (
                   filteredTransactions.map((transaction) => (
                     <div 
-                      key={transaction.id} 
+                      key={`${transaction.type}-${transaction.id}`}
                       className="flex items-center justify-between p-4 rounded-lg hover:bg-white/10 transition-all duration-200 border border-white/5"
                     >
                       <div className="flex items-center gap-4">

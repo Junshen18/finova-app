@@ -8,6 +8,9 @@ import { DashboardStats } from "@/components/dashboard-stats";
 import { RecentTransactions } from "@/components/recent-transactions";
 import { SpendingInsights } from "@/components/spending-insights";
 import Sidebar from "@/components/side-bar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Suspense } from "react";
+import { OweSummary } from "@/components/owe-summary";
 
 export default async function DashboardPage() {
     const supabase = await createClient();
@@ -47,6 +50,11 @@ export default async function DashboardPage() {
                             <div className="lg:col-span-1">
                                 <SpendingInsights />
                             </div>
+                        </div>
+
+                        {/* Owed / Owe Section */}
+                        <div className="mt-8">
+                          <OweSummary />
                         </div>
                     </div>
                 </div>
