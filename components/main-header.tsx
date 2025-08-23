@@ -3,7 +3,8 @@
 import { FaFire, FaRegBell, FaUserGroup } from "react-icons/fa6";
 import SplitText from "./ui/split-text";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 interface MainHeaderProps {
     profile: {
@@ -17,6 +18,21 @@ export default function MainHeader({ profile }: MainHeaderProps) {
     if (hour < 12) return "Good Morning,";
     if (hour < 18) return "Good Afternoon,";
     return "Good Evening,";
+  }, []);
+
+  const [pendingCount, setPendingCount] = useState<number>(0);
+  useEffect(() => {
+    (async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data, error } = await supabase.rpc("get_received_friend_requests");
+        if (!error) setPendingCount((data || []).length || 0);
+      } catch {
+        // ignore silently in header
+      }
+    })();
   }, []);
 
   return (
@@ -47,8 +63,13 @@ export default function MainHeader({ profile }: MainHeaderProps) {
         <div className="bg-white/10 rounded-lg p-2 flex flex-row items-center justify-center gap-1 border border-black/10">
           <FaRegBell className="text-foreground/70 text-lg cursor-pointer" />
         </div>
-        <Link href="/protected/friends" className="bg-white/10 rounded-lg p-2 flex flex-row items-center justify-center gap-1 border border-black/10">
+        <Link href="/protected/friends" className="relative bg-white/10 rounded-lg p-2 flex flex-row items-center justify-center gap-1 border border-black/10">
           <FaUserGroup className="text-foreground/70 text-lg cursor-pointer" />
+          {pendingCount > 0 && (
+            <span className="absolute -top-1 -right-1 px-1.5 min-w-[16px] h-4 rounded-full bg-red-500 text-[10px] leading-4 text-white font-semibold text-center ring-2 ring-black/20">
+              {pendingCount > 99 ? '99+' : pendingCount}
+            </span>
+          )}
         </Link>
       </div>
     </div>

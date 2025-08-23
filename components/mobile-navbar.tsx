@@ -8,7 +8,7 @@ export function MobileNavbar({ onAddTransaction }: { onAddTransaction: () => voi
       <div className="relative flex justify-between items-center w-full bg-ring rounded-2xl h-14 shadow-lg ">
         <div className="flex justify-between items-center w-full bg-card rounded-2xl h-14 relative z-10 px-2">
           {navItems.map((item, index) => {
-            if (item.name === "Add Transaction") {
+            if ((item as any).name === "Add Transaction") {
               return (
                 <button
                   key={item.href}
@@ -29,9 +29,7 @@ export function MobileNavbar({ onAddTransaction }: { onAddTransaction: () => voi
                 ? WalletIcon
                 : item.icon === "SparklesIcon"
                 ? SparklesIcon
-                : item.icon === "UserCircleIcon"
-                ? UserCircleIcon
-                : HomeIcon;
+                : UserCircleIcon;
             return (
               <Link
                 key={item.href}

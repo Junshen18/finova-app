@@ -1,32 +1,42 @@
 export const navItems = [
   {
-    name: "Dashboard",
+    label: "Dashboard",
     href: "/protected",
     icon: "HomeIcon",
   },
   {
-    name: "Transactions",
+    label: "Transactions",
     href: "/protected/transactions",
     icon: "DocumentCurrencyDollarIcon",
   },
   {
-    name: "Add Transaction",
-    href: "/protected/add",
-    icon: "PlusCircleIcon",
-  },
-  {
-    name: "Budget",
-    href: "/protected/budget",
+    label: "Accounts",
+    href: "/protected/accounts",
     icon: "WalletIcon",
   },
   {
-    name: "AI Analysis",
+    label: "AI Analysis",
     href: "/protected/ai-analysis",
     icon: "SparklesIcon",
   },
   {
-    name: "Account",
-    href: "/protected/account",
-    icon: "UserCircleIcon",
+    label: "Groups",
+    href: "/protected/groups",
+    icon: "UserGroupIcon",
+  },
+  {
+    label: "Games",
+    href: "/protected/games",
+    icon: "PuzzlePieceIcon",
+  },
+  // {
+  //   name: "Add Transaction",
+  //   href: "/protected/add",
+  //   icon: "PlusCircleIcon",
+  // },
+  {
+    label: "Settings",
+    href: "/protected/settings",
+    icon: "Cog6ToothIcon",
   },
 ]; 

@@ -1,30 +1,32 @@
 import Link from "next/link";
 import Image from "next/image";
-import { UserCircleIcon, HomeIcon, ListBulletIcon, Cog6ToothIcon, WalletIcon, UserGroupIcon, SparklesIcon, PuzzlePieceIcon } from "@heroicons/react/24/outline";
+import { UserCircleIcon, HomeIcon, ListBulletIcon, Cog6ToothIcon, WalletIcon, UserGroupIcon, SparklesIcon, PuzzlePieceIcon, DocumentCurrencyDollarIcon } from "@heroicons/react/24/outline";
 import { NotificationBadge } from "@/components/notification-badge";
 import { usePathname } from "next/navigation";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
+import { navItems } from "@/data/navItems";
 
+type IconType = React.ComponentType<React.SVGProps<SVGSVGElement>>;
 interface NavItem {
   href: string;
   label: string;
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  icon: string | IconType;
   showBadge?: boolean;
 }
 
 export function DesktopSidebar({ profile }: { profile: any }) {
   const pathname = usePathname();
 
-  const navItems: NavItem[] = [
-    { href: "/protected", label: "Dashboard", icon: HomeIcon },
-    { href: "/protected/transactions", label: "Transactions", icon: ListBulletIcon },
-    { href: "/protected/budget", label: "Budget", icon: WalletIcon },
-    { href: "/protected/ai-analysis", label: "AI Analysis", icon: SparklesIcon },
-    { href: "/protected/groups", label: "Groups", icon: UserGroupIcon },
-    { href: "/protected/games", label: "Games", icon: PuzzlePieceIcon },
-    { href: "/protected/settings", label: "Settings", icon: Cog6ToothIcon },
-  ];
+    // const navItems: NavItem[] = [
+    //   { href: "/protected", label: "Dashboard", icon: HomeIcon },
+    //   { href: "/protected/transactions", label: "Transactions", icon: ListBulletIcon },
+    //   { href: "/protected/accounts", label: "Accounts", icon: WalletIcon },
+    //   { href: "/protected/ai-analysis", label: "AI Analysis", icon: SparklesIcon },
+    //   { href: "/protected/groups", label: "Groups", icon: UserGroupIcon },
+    //   { href: "/protected/games", label: "Games", icon: PuzzlePieceIcon },
+    //   { href: "/protected/settings", label: "Settings", icon: Cog6ToothIcon },
+    // ];
 
   const adminItems = profile?.role === 'admin' ? [
     { 
@@ -48,11 +50,22 @@ export function DesktopSidebar({ profile }: { profile: any }) {
           />
         </div>
         <nav className="flex flex-col gap-3">
-          {[...navItems, ...adminItems].map((item) => {
+          {[...navItems, ...adminItems].map((item: NavItem) => {
             // Check if current path matches this item's href
             const isActive = pathname === item.href || 
               (item.href === "/protected" && pathname === "/protected/dashboard") ||
               (item.href !== "/protected" && pathname.startsWith(item.href));
+            const iconMap: Record<string, IconType> = {
+              HomeIcon,
+              DocumentCurrencyDollarIcon,
+              WalletIcon,
+              SparklesIcon,
+              UserGroupIcon,
+              PuzzlePieceIcon,
+              Cog6ToothIcon,
+              ListBulletIcon,
+            };
+            const IconComp: IconType = typeof item.icon === 'string' ? (iconMap[item.icon] || HomeIcon) : (item.icon as IconType);
             
             return (
               <Link
@@ -64,7 +77,7 @@ export function DesktopSidebar({ profile }: { profile: any }) {
                     : 'hover:bg-white/10 text-white'
                 }`}
               >
-                <item.icon className={`h-5 w-5 ${
+                <IconComp className={`h-5 w-5 ${
                   isActive ? 'text-black' : 'text-white group-hover:text-[#E9FE52]'
                 }`} />
                 <div className="flex items-center flex-1">
