@@ -234,8 +234,16 @@ export default function TransactionsPage() {
     }
   };
 
-  const totalIncome = useMemo(() => filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0), [filteredTransactions]);
-  const totalExpenses = useMemo(() => filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + (t.amount || 0), 0), [filteredTransactions]);
+  // Totals reflect selected month only; ignore search and list filters
+  const monthTransactions = useMemo(() => {
+    return transactions.filter(t => {
+      const d = new Date(t.date);
+      return d.getFullYear() === selectedMonth.getFullYear() && d.getMonth() === selectedMonth.getMonth();
+    });
+  }, [transactions, selectedMonth]);
+
+  const totalIncome = useMemo(() => monthTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0), [monthTransactions]);
+  const totalExpenses = useMemo(() => monthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + (t.amount || 0), 0), [monthTransactions]);
   const totalBalance = useMemo(() => totalIncome - totalExpenses, [totalIncome, totalExpenses]);
 
   return (
