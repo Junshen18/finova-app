@@ -1,9 +1,10 @@
 "use client";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { FaArrowUp, FaArrowDown, FaEllipsisH } from "react-icons/fa";
+import { FaArrowUp, FaArrowDown } from "react-icons/fa";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useMemo, useState } from "react";
 import { Skeleton } from "./ui/skeleton";
+import Link from "next/link";
 
 type Tx = { id: number; title: string; amount: number; category: string; date: string; type: "income"|"expense"|"transfer" };
 
@@ -66,9 +67,9 @@ export function RecentTransactions() {
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold text-white">Recent Transactions</CardTitle>
-          <button className="text-gray-400 hover:text-white transition-colors">
-            <FaEllipsisH className="w-4 h-4" />
-          </button>
+          <Link href="/protected/transactions" className="text-sm text-gray-400 hover:text-white transition-colors">
+            View all
+          </Link>
         </div>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">

@@ -29,6 +29,30 @@ export default function TransactionsPage() {
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
 
+  // Parse a date string safely:
+  // - If it's a date-only string (YYYY-MM-DD), interpret as local calendar date (avoid UTC shift)
+  // - Otherwise, let Date parse (respects timezone offsets/tz in the string)
+  const parseDateAsLocalIfDateOnly = (value: string) => {
+    const dateOnlyPattern = /^\d{4}-\d{2}-\d{2}$/;
+    if (dateOnlyPattern.test(value)) {
+      const [yearStr, monthStr, dayStr] = value.split("-");
+      const year = Number(yearStr);
+      const monthIndex = Number(monthStr) - 1;
+      const day = Number(dayStr);
+      return new Date(year, monthIndex, day);
+    }
+    return new Date(value);
+  };
+
+  // Get a yyyy-mm-dd key from a date string using local timezone
+  const getLocalDateKeyFromString = (value: string) => {
+    const d = parseDateAsLocalIfDateOnly(value);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const da = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${da}`;
+  };
+
   const fetchTransactions = async () => {
     setLoading(true);
     const supabase = createClient();
@@ -126,7 +150,9 @@ export default function TransactionsPage() {
       status: "completed",
     }));
 
-    const all = [...expTx, ...incTx, ...trfTx].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const all = [...expTx, ...incTx, ...trfTx].sort(
+      (a, b) => parseDateAsLocalIfDateOnly(b.date).getTime() - parseDateAsLocalIfDateOnly(a.date).getTime()
+    );
     setTransactions(all);
     setLoading(false);
   };
@@ -164,7 +190,7 @@ export default function TransactionsPage() {
   // Get unique categories for current type
   const categories = useMemo(() => {
     const inMonth = transactions.filter(t => {
-      const d = new Date(t.date);
+      const d = parseDateAsLocalIfDateOnly(t.date);
       return d.getFullYear() === selectedMonth.getFullYear() && d.getMonth() === selectedMonth.getMonth();
     });
     const source = filterType === "all" ? inMonth : inMonth.filter(t => t.type === filterType);
@@ -182,7 +208,7 @@ export default function TransactionsPage() {
       const tCat = (t.category || "").trim().toLowerCase();
       const tTitle = (t.title || "").toLowerCase();
       const tDesc = (t.description || "").toLowerCase();
-      const d = new Date(t.date);
+      const d = parseDateAsLocalIfDateOnly(t.date);
       const inMonth = d.getFullYear() === selectedMonth.getFullYear() && d.getMonth() === selectedMonth.getMonth();
 
       const matchesType = typeFilter === "all" || tType === typeFilter;
@@ -193,16 +219,39 @@ export default function TransactionsPage() {
     });
   }, [transactions, filterType, filterCategory, searchQuery, selectedMonth]);
 
-  // Format date for display
+  // Group filtered transactions by local calendar date key (yyyy-mm-dd)
+  const groupedTransactions = useMemo(() => {
+    const map = new Map<string, Transaction[]>();
+    filteredTransactions.forEach((t) => {
+      const key = getLocalDateKeyFromString(t.date);
+      const arr = map.get(key);
+      if (arr) {
+        arr.push(t);
+      } else {
+        map.set(key, [t]);
+      }
+    });
+    // Sort each group by time desc
+    map.forEach((arr) => {
+      arr.sort((a, b) => parseDateAsLocalIfDateOnly(b.date).getTime() - parseDateAsLocalIfDateOnly(a.date).getTime());
+    });
+    // Sort group keys by date desc
+    const keys = Array.from(map.keys()).sort((a, b) => parseDateAsLocalIfDateOnly(b).getTime() - parseDateAsLocalIfDateOnly(a).getTime());
+    return keys.map((key) => ({ key, items: map.get(key)! }));
+  }, [filteredTransactions]);
+
+  // Format date for display using local day boundaries
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+    const date = parseDateAsLocalIfDateOnly(dateString);
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const startOfThat = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const diffMs = startOfToday.getTime() - startOfThat.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
     if (diffDays === 0) return "Today";
     if (diffDays === 1) return "Yesterday";
-    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays > 1 && diffDays < 7) return `${diffDays} days ago`;
     return date.toLocaleDateString();
   };
 
@@ -237,7 +286,7 @@ export default function TransactionsPage() {
   // Totals reflect selected month only; ignore search and list filters
   const monthTransactions = useMemo(() => {
     return transactions.filter(t => {
-      const d = new Date(t.date);
+      const d = parseDateAsLocalIfDateOnly(t.date);
       return d.getFullYear() === selectedMonth.getFullYear() && d.getMonth() === selectedMonth.getMonth();
     });
   }, [transactions, selectedMonth]);
@@ -388,48 +437,52 @@ export default function TransactionsPage() {
                 scrollbarColor: '#4b5563 rgba(55, 65, 81, 0.3)'
               }}
             >
-              <div className="space-y-4 p-6">
+              <div className="space-y-6 p-6">
                 {filteredTransactions.length === 0 ? (
                   <div className="text-center py-8 text-gray-400">
                     <p>No transactions found matching your filters.</p>
                   </div>
                 ) : (
-                  filteredTransactions.map((transaction) => (
-                    <div 
-                      key={`${transaction.type}-${transaction.id}`}
-                      className="flex items-center justify-between p-4 rounded-lg hover:bg-white/10 transition-all duration-200 border border-white/5"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className={`p-3 rounded-full ${getTransactionColor(transaction.type)}`}>
-                          {getTransactionIcon(transaction.type)}
+                  groupedTransactions.map((group) => (
+                    <div key={group.key} className="space-y-3">
+                      <div className="text-xs uppercase tracking-wide text-gray-400">{formatDate(group.key)}</div>
+                      {group.items.map((transaction) => (
+                        <div 
+                          key={`${transaction.type}-${transaction.id}`}
+                          className="flex items-center justify-between p-4 rounded-lg hover:bg-white/10 transition-all duration-200 border border-white/5"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className={`p-3 rounded-full ${getTransactionColor(transaction.type)}`}>
+                              {getTransactionIcon(transaction.type)}
+                            </div>
+                            <div className="flex flex-col">
+                              <p className="font-medium text-white">{transaction.title}</p>
+                              {transaction.category && transaction.category !== transaction.title && (
+                                <p className="text-sm text-gray-300">{transaction.category}</p>
+                              )}
+                              {transaction.description && transaction.description !== transaction.title && (
+                                <p className="text-xs text-gray-400 mt-1">{transaction.description}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className={`font-semibold text-lg ${
+                              transaction.type === 'income' ? 'text-emerald-400' : 
+                              transaction.type === 'expense' ? 'text-red-400' : 'text-blue-400'
+                            }`}>
+                              {transaction.type === 'income' ? '+' : transaction.type === 'expense' ? '-' : ''}RM {Math.abs(transaction.amount).toFixed(2)}
+                            </p>
+                            {transaction.status && (
+                              <Badge 
+                                variant={transaction.status === 'completed' ? 'default' : 'secondary'}
+                                className="text-xs mt-1"
+                              >
+                                {transaction.status}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex flex-col">
-                          <p className="font-medium text-white">{transaction.title}</p>
-                          {transaction.category && transaction.category !== transaction.title && (
-                            <p className="text-sm text-gray-300">{transaction.category}</p>
-                          )}
-                          {transaction.description && transaction.description !== transaction.title && (
-                            <p className="text-xs text-gray-400 mt-1">{transaction.description}</p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className={`font-semibold text-lg ${
-                          transaction.type === 'income' ? 'text-emerald-400' : 
-                          transaction.type === 'expense' ? 'text-red-400' : 'text-blue-400'
-                        }`}>
-                          {transaction.type === 'income' ? '+' : transaction.type === 'expense' ? '-' : ''}RM {Math.abs(transaction.amount).toFixed(2)}
-                        </p>
-                        <p className="text-xs text-gray-400">{formatDate(transaction.date)}</p>
-                        {transaction.status && (
-                          <Badge 
-                            variant={transaction.status === 'completed' ? 'default' : 'secondary'}
-                            className="text-xs mt-1"
-                          >
-                            {transaction.status}
-                          </Badge>
-                        )}
-                      </div>
+                      ))}
                     </div>
                   ))
                 )}

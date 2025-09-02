@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { navItems } from "../data/navItems";
-import { PlusCircleIcon, HomeIcon, DocumentCurrencyDollarIcon, UserCircleIcon, WalletIcon, SparklesIcon } from "@heroicons/react/24/outline";
+import { PlusCircleIcon, HomeIcon, DocumentCurrencyDollarIcon, UserCircleIcon, WalletIcon, SparklesIcon, Cog6ToothIcon, PuzzlePieceIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 
 export function MobileNavbar({ onAddTransaction }: { onAddTransaction: () => void }) {
   return (
@@ -29,6 +29,12 @@ export function MobileNavbar({ onAddTransaction }: { onAddTransaction: () => voi
                 ? WalletIcon
                 : item.icon === "SparklesIcon"
                 ? SparklesIcon
+                : item.icon === "UserGroupIcon"
+                ? UserGroupIcon
+                : item.icon === "PuzzlePieceIcon"
+                ? PuzzlePieceIcon
+                : item.icon === "Cog6ToothIcon"
+                ? Cog6ToothIcon
                 : UserCircleIcon;
             return (
               <Link

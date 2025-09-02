@@ -36,9 +36,9 @@ export default async function DashboardPage() {
                         </div>
                         
                         {/* Stats Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
-                            <DashboardStats />
-                        </div>
+                        {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-8"> */}
+                            {/* <DashboardStats /> */}
+                        {/* </div> */}
 
                         {/* 6-Month Trend */}
                         <div className="mb-8">
