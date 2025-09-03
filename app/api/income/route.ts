@@ -4,20 +4,25 @@ import { createClient } from "@/lib/supabase/server";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { user_id, date, amount, category_id, account_id, description, client_request_id } = body;
+    const { date, amount, category_id, account_id, description, client_request_id } = body;
 
-    if (!user_id || !date || !amount || !category_id) {
+    if (!date || !amount || !category_id) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
     }
 
     const supabase = await createClient();
+    const { data: auth } = await supabase.auth.getUser();
+    const sessionUser = auth?.user;
+    if (!sessionUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     if (client_request_id) {
       const since = new Date(Date.now() - 10_000).toISOString();
       const { data: dup } = await supabase
         .from("income_transactions")
         .select("id")
-        .eq("user_id", user_id)
+        .eq("user_id", sessionUser.id)
         .gte("date", since)
         .eq("amount", amount)
         .eq("category_id", category_id)
@@ -31,7 +36,7 @@ export async function POST(request: Request) {
       .from("income_transactions")
       .insert([
         {
-          user_id,
+          user_id: sessionUser.id,
           date,
           amount,
           category_id,

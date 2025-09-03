@@ -154,7 +154,7 @@ export default function GroupsPage() {
   };
 
   return (
-    <div className="max-w-2xl w-full mx-auto py-8 px-6 gap-4 flex flex-col">
+    <div className="max-w-2xl w-full mx-auto py-4 md:py-8 px-6 gap-4 flex flex-col">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Groups</h1>
         <CreateGroup onCreated={refetchGroups} />

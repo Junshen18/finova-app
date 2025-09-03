@@ -1,6 +1,6 @@
 "use client";
 
-import { FaFire, FaRegBell, FaUserGroup } from "react-icons/fa6";
+import { FaFire, FaRegBell, FaUserGroup, FaCircleUser } from "react-icons/fa6";
 import SplitText from "./ui/split-text";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 interface MainHeaderProps {
     profile: {
       display_name: string;
+      avatar_url?: string | null;
     };
 }
 
@@ -37,29 +38,42 @@ export default function MainHeader({ profile }: MainHeaderProps) {
 
   return (
     <div className="flex flex-row items-center justify-between w-full pt-2">
-      <div className="flex flex-col items-start justify-center w-full">
-        <div>
-          <h1 className="text-sm font-medium opacity-70">{greeting}</h1>
+      <div className="flex flex-row items-center justify-start w-full gap-2 px-2">
+      <Link href="/protected/profile" className="md:hidden w-10 h-10 rounded-full overflow-hidden border border-black/10" aria-label="Profile">
+          {profile?.avatar_url ? (
+            <img src={profile.avatar_url} alt="Profile avatar" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-white/10">
+              <FaCircleUser className="text-foreground/70 text-lg" />
+            </div>
+          )}
+        </Link>
+        <div className="flex flex-col items-start justify-center w-fit md:w-full">
+          <div>
+            <h1 className="text-xs md:text-base font-medium opacity-70">{greeting}</h1>
+          </div>
+          <SplitText
+            text={`${profile?.display_name}.`}
+            className="text-sm md:text-lg font-semibold text-center"
+            delay={100}
+            duration={0.3}
+            ease="power3.out"
+            splitType="chars"
+            from={{ opacity: 0, y: 40 }}
+            to={{ opacity: 1, y: 0 }}
+            threshold={0.1}
+            rootMargin="-100px"
+            textAlign="center"
+          />
         </div>
-        <SplitText
-          text={`${profile?.display_name}.`}
-          className="text-xl font-semibold text-center"
-          delay={100}
-          duration={0.3}
-          ease="power3.out"
-          splitType="chars"
-          from={{ opacity: 0, y: 40 }}
-          to={{ opacity: 1, y: 0 }}
-          threshold={0.1}
-          rootMargin="-100px"
-          textAlign="center"
-        />
       </div>
+
       <div className="flex flex-row items-center justify-end w-full gap-2 px-2">
-        <div className="bg-white/10 rounded-lg p-2 flex flex-row items-center justify-center gap-1 border border-black/10">
+        {/* <div className="bg-white/10 rounded-lg p-2 flex flex-row items-center justify-center gap-1 border border-black/10">
           <FaFire className="text-orange-400 text-lg cursor-pointer" />
           <div className="text-sm font-semibold text-orange-300">6</div>
-        </div>
+        </div> */}
+        
         <div className="bg-white/10 rounded-lg p-2 flex flex-row items-center justify-center gap-1 border border-black/10">
           <FaRegBell className="text-foreground/70 text-lg cursor-pointer" />
         </div>
@@ -71,6 +85,7 @@ export default function MainHeader({ profile }: MainHeaderProps) {
             </span>
           )}
         </Link>
+        
       </div>
     </div>
   );

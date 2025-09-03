@@ -36,44 +36,52 @@ export default function AdminApplicationsPage() {
 
   const fetchApplications = async () => {
     const supabase = createClient();
-    
-    const { data: applications, error } = await supabase
-      .from("professional_applications")
-      .select(`
-        *,
-        user:profiles(email, display_name)
-      `)
-      .order("submitted_at", { ascending: false });
-
-    if (error) {
-      toast.error("Failed to fetch applications");
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+    // Gate by role client-side as an extra UX guard (enforced by API as well)
+    const { data: profile } = await supabase.from("profiles").select("role").eq("user_id", user.id).single();
+    const isAdmin = (profile?.role || "") === "admin";
+    if (!isAdmin) {
+      setApplications([]);
+      setIsLoading(false);
       return;
     }
 
-    setApplications(applications as Application[]);
+    const res = await fetch("/api/professional-applications", { cache: "no-store" });
+    if (!res.ok) {
+      toast.error("Failed to fetch applications");
+      setIsLoading(false);
+      return;
+    }
+    const { data: applications } = await res.json();
+
+    setApplications((applications || []) as Application[]);
     setIsLoading(false);
   };
 
   const handleStatusUpdate = async (id: string, status: "approved" | "rejected") => {
     try {
-      const supabase = createClient();
-      
-      const { error } = await supabase
-        .from("professional_applications")
-        .update({ status })
-        .eq("id", id);
-
-      if (error) throw error;
+      const res = await fetch("/api/professional-applications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status }),
+      });
+      if (!res.ok) {
+        throw new Error("Request failed");
+      }
 
       // If approved, update user role
       if (status === "approved") {
+        const supabase = createClient();
         const application = applications.find(app => app.id === id);
         if (application) {
           const { error: profileError } = await supabase
             .from("profiles")
             .update({ role: "professional" })
             .eq("user_id", application.user_id);
-
           if (profileError) throw profileError;
         }
       }

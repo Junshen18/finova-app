@@ -296,13 +296,14 @@ export default function TransactionsPage() {
   const totalBalance = useMemo(() => totalIncome - totalExpenses, [totalIncome, totalExpenses]);
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground pt-6 px-4">
-      <div className="flex flex-col items-start justify-start w-full h-full gap-6 max-w-6xl mx-auto">
+    <div className="flex min-h-screen bg-background text-foreground pt-4 md:pt-10 px-4">
+      <div className="flex flex-col items-start justify-start w-full h-full gap-4 max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex flex-row items-center justify-between w-full">
-          <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold">Transactions History</h1>
-            <div className="flex items-center gap-2 bg-white/5 rounded-md px-2 py-1">
+        <div className="flex items-center justify-between w-full">
+        <div className="flex items-center gap-4">
+          <h1 className="text-base md:text-2xl font-semibold">Transactions History</h1>
+          <div className="md:flex hidden items-center gap-2 bg-white/5 rounded-md px-2 py-1"> {/* Month selector */}
+
               <button
                 aria-label="Previous month"
                 className="p-1 rounded hover:bg-white/10"
@@ -320,55 +321,78 @@ export default function TransactionsPage() {
               >
                 <FaChevronRight className="w-4 h-4" />
               </button>
-            </div>
+              </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-              <FaFilter className="w-4 h-4 mr-2" />
-              Export
-            </Button>
-          </div>
+          <Button variant="outline" size="sm">
+            <FaFilter className="w-4 h-4 mr-2" />
+            Export
+          </Button>
+        </div>
+
+        {/* Month selector */}
+        <div className="md:hidden flex items-center gap-2 bg-white/5 rounded-md px-2 py-1 w-full justify-center">
+          <button
+            aria-label="Previous month"
+            className="p-1 rounded hover:bg-white/10"
+            onClick={() => setSelectedMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
+          >
+            <FaChevronLeft className="w-4 h-4" />
+          </button>
+          <span className="text-sm text-white/90 min-w-[9rem] text-center">
+            {selectedMonth.toLocaleString(undefined, { month: 'long', year: 'numeric' })}
+          </span>
+          <button
+            aria-label="Next month"
+            className="p-1 rounded hover:bg-white/10"
+            onClick={() => setSelectedMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
+          >
+            <FaChevronRight className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+        <div className="grid grid-cols-3 gap-3 w-full">
           <Card className="border-0 shadow-sm bg-white/5 backdrop-blur-sm">
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">Total Balance</p>
-                  <p className="text-2xl font-bold text-white">RM {totalBalance.toFixed(2)}</p>
+                  <p className="hidden md:block text-base text-gray-400">Total Balance</p>
+                  <p className="text-[10px] md:hidden text-gray-400">Total (RM)</p>
+                  <p className="text-sm md:text-2xl font-bold text-white">{totalBalance.toFixed(2)}</p>
                 </div>
-                <div className="p-3 rounded-full bg-blue-500/20">
-                  <FaWallet className="w-6 h-6 text-blue-400" />
+                <div className="md:block hidden p-2 rounded-full bg-blue-500/20">
+                  <FaWallet className="w-5 h-5 text-blue-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="border-0 shadow-sm bg-white/5 backdrop-blur-sm">
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">Total Income</p>
-                  <p className="text-2xl font-bold text-emerald-400">RM {totalIncome.toFixed(2)}</p>
+                  <p className="hidden md:block text-base text-gray-400">Total Income</p>
+                  <p className="text-[10px] md:hidden text-gray-400">Income (RM)</p>
+                  <p className="text-sm md:text-2xl font-bold text-emerald-400">{totalIncome.toFixed(2)}</p>
                 </div>
-                <div className="p-3 rounded-full bg-emerald-500/20">
-                  <FaArrowDown className="w-6 h-6 text-emerald-400" />
+                <div className="md:block hidden p-2 rounded-full bg-emerald-500/20">
+                  <FaArrowDown className="w-5 h-5 text-emerald-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="border-0 shadow-sm bg-white/5 backdrop-blur-sm">
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">Total Expenses</p>
-                  <p className="text-2xl font-bold text-red-400">RM {totalExpenses.toFixed(2)}</p>
+                  <p className="hidden md:block text-base text-gray-400">Total Expenses</p>
+                  <p className="text-[10px] md:hidden text-gray-400">Expenses (RM)</p>
+
+                  <p className="text-sm md:text-2xl font-bold text-red-400">{totalExpenses.toFixed(2)}</p>
                 </div>
-                <div className="p-3 rounded-full bg-red-500/20">
-                  <FaArrowUp className="w-6 h-6 text-red-400" />
+                <div className="md:block hidden p-2 rounded-full bg-red-500/20">
+                  <FaArrowUp className="w-5 h-5 text-red-400" />
                 </div>
               </div>
             </CardContent>
@@ -377,21 +401,20 @@ export default function TransactionsPage() {
 
         {/* Filters */}
         <Card className="border-0 shadow-sm bg-white/5 backdrop-blur-sm w-full">
-          <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row gap-4 items-center">
-              <div className="flex items-center gap-2 flex-1">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 w-full overflow-x-auto">
+              <div className="flex items-center gap-2 flex-1 min-w-[40%]">
                 <FaSearch className="w-4 h-4 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search transactions..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-transparent border-none outline-none text-white placeholder-gray-400 flex-1"
+                  className="bg-transparent border-none outline-none text-white placeholder-gray-400 w-full"
                 />
               </div>
-              
               <Select value={filterType} onValueChange={(v) => setFilterType(v)}>
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-[120px]">
                   <SelectValue placeholder="Type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -401,9 +424,8 @@ export default function TransactionsPage() {
                   <SelectItem value="transfer">Transfer</SelectItem>
                 </SelectContent>
               </Select>
-
               <Select value={filterCategory} onValueChange={(v) => setFilterCategory(v)}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -431,13 +453,13 @@ export default function TransactionsPage() {
           </CardHeader>
           <CardContent className="p-0">
             <div 
-              className="max-h-[400px] md:max-h-[600px] overflow-y-auto scroll-smooth custom-scrollbar" 
+              className="max-h-[calc(100vh-320px)] md:max-h-[600px] overflow-y-auto scroll-smooth custom-scrollbar" 
               style={{
                 scrollbarWidth: 'thin',
                 scrollbarColor: '#4b5563 rgba(55, 65, 81, 0.3)'
               }}
             >
-              <div className="space-y-6 p-6">
+              <div className="space-y-6 p-6 ">
                 {filteredTransactions.length === 0 ? (
                   <div className="text-center py-8 text-gray-400">
                     <p>No transactions found matching your filters.</p>

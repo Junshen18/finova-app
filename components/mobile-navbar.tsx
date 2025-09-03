@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { navItems } from "../data/navItems";
+import { navItemsMobile } from "../data/navItems";
 import { PlusCircleIcon, HomeIcon, DocumentCurrencyDollarIcon, UserCircleIcon, WalletIcon, SparklesIcon, Cog6ToothIcon, PuzzlePieceIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 
 export function MobileNavbar({ onAddTransaction }: { onAddTransaction: () => void }) {
@@ -7,7 +7,7 @@ export function MobileNavbar({ onAddTransaction }: { onAddTransaction: () => voi
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-transparent flex justify-between items-center px-2 py-1 md:hidden h-20">
       <div className="relative flex justify-between items-center w-full bg-ring rounded-2xl h-14 shadow-lg ">
         <div className="flex justify-between items-center w-full bg-card rounded-2xl h-14 relative z-10 px-2">
-          {navItems.map((item, index) => {
+          {navItemsMobile.map((item, index) => {
             if ((item as any).name === "Add Transaction") {
               return (
                 <button
@@ -23,18 +23,14 @@ export function MobileNavbar({ onAddTransaction }: { onAddTransaction: () => voi
             const Icon =
               item.icon === "HomeIcon"
                 ? HomeIcon
-                : item.icon === "DocumentCurrencyDollarIcon"
-                ? DocumentCurrencyDollarIcon
-                : item.icon === "WalletIcon"
-                ? WalletIcon
                 : item.icon === "SparklesIcon"
                 ? SparklesIcon
                 : item.icon === "UserGroupIcon"
                 ? UserGroupIcon
                 : item.icon === "PuzzlePieceIcon"
                 ? PuzzlePieceIcon
-                : item.icon === "Cog6ToothIcon"
-                ? Cog6ToothIcon
+                : item.icon === "UserCircleIcon"
+                ? UserCircleIcon
                 : UserCircleIcon;
             return (
               <Link

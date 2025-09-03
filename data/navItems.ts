@@ -40,3 +40,46 @@ export const navItems = [
     icon: "Cog6ToothIcon",
   },
 ]; 
+
+export const navItemsMobile = [
+  {
+    label: "Dashboard",
+    href: "/protected",
+    icon: "HomeIcon",
+  },
+  // {
+  //   label: "Transactions",
+  //   href: "/protected/transactions",
+  //   icon: "DocumentCurrencyDollarIcon",
+  // },
+  // {
+  //   label: "Accounts",
+  //   href: "/protected/accounts",
+  //   icon: "WalletIcon",
+  // },
+  {
+    label: "AI Analysis",
+    href: "/protected/ai-analysis",
+    icon: "SparklesIcon",
+  },
+  {
+    label: "Groups",
+    href: "/protected/groups",
+    icon: "UserGroupIcon",
+  },
+  {
+    label: "Games",
+    href: "/protected/games",
+    icon: "PuzzlePieceIcon",
+  },
+  // {
+  //   name: "Add Transaction",
+  //   href: "/protected/add",
+  //   icon: "PlusCircleIcon",
+  // },
+  {
+    label: "Profile",
+    href: "/protected/profile",
+    icon: "UserCircleIcon",
+  },
+]; 
