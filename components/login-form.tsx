@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export function LoginForm({
   className,
@@ -13,7 +14,6 @@ export function LoginForm({
 }: React.ComponentPropsWithoutRef<"div">) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [emailValid, setEmailValid] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [username, setUsername] = useState("");
@@ -21,14 +21,10 @@ export function LoginForm({
   const [isSignUpMode, setIsSignUpMode] = useState(false);
   const router = useRouter();
 
-  function validateEmail(email: string) {
-    return /^[^\s@]+@[^\s@]+\.com$/.test(email);
-  }
-
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const value = e.target.value;
     setEmail(value);
-    setEmailValid(validateEmail(value));
+    // setEmailValid(validateEmail(value));
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,12 +54,15 @@ export function LoginForm({
       }
       // Other errors
       setError(error.message || "An error occurred");
+      toast.error(error.message || "An error occurred");
+      setIsLoading(false);
       return;
     } else {
       console.log("perform sign up");
       // Sign up mode
       if (password !== repeatPassword) {
         setError("Passwords do not match");
+        toast.error("Passwords do not match");
         setIsLoading(false);
         return;
       }
@@ -80,6 +79,7 @@ export function LoginForm({
         });
         if (error) {
           console.error("Error signing up", error);
+          toast.error(error.message || "Error signing up");
         }else{
           const { error: profileError } = await supabase.from("profiles").insert({
             user_id: data.user?.id,
@@ -88,6 +88,7 @@ export function LoginForm({
           });
           if (profileError) {
             console.error("Error creating profile", profileError);
+            toast.error(profileError.message || "Error creating profile");
           }else{
             console.log("Profile created successfully");
             router.push("/auth/sign-up-success");
@@ -95,6 +96,8 @@ export function LoginForm({
         };
       } catch (error: any) {
         setError(error.message || "An error occurred");
+        toast.error(error.message || "An error occurred");
+        setIsLoading(false);
       } finally {
         setIsLoading(false);
       }
@@ -118,7 +121,7 @@ export function LoginForm({
 
   return (
     <div
-      className={cn("w-full flex flex-col items-center gap-6 h-56", className)}
+      className={cn("w-full flex flex-col items-center gap-6 h-full", className)}
       {...props}
     >
       <form onSubmit={handleSubmit} className="w-full">
@@ -172,7 +175,6 @@ export function LoginForm({
               </div>
             </div>
           )}
-          {emailValid ? (
             <Button
               className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-3 font-semibold transition cursor-pointer"
               type="submit"
@@ -185,14 +187,11 @@ export function LoginForm({
                 : isLoading
                 ? "Logging in..."
                 : "Continue"}
-            </Button>
-          ) : (
-            <p className="text-xs text-gray-400 text-center">
-              We'll create an account if you don't have one yet.
-            </p>
-          )}
+            </Button> 
         </div>
       </form>
+      {/* Errors displayed via toast */}
+
       <div className="flex items-center">
         <Link
           href="/auth/forgot-password"
@@ -208,7 +207,6 @@ export function LoginForm({
       >
         Continue with Google
       </Button> */}
-      {error && <p className="text-sm text-red-500">{error}</p>}
     </div>
   );
 }

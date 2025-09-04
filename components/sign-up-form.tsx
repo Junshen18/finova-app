@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export function SignUpForm({
   className,
@@ -31,12 +32,14 @@ export function SignUpForm({
 
     if (!username.trim()) {
       setError("Please enter a profile name");
+      toast.error("Please enter a profile name");
       setIsLoading(false);
       return;
     }
 
     if (password !== repeatPassword) {
       setError("Passwords do not match");
+      toast.error("Passwords do not match");
       setIsLoading(false);
       return;
     }
@@ -50,7 +53,10 @@ export function SignUpForm({
           data: { username },
         },
       });
-      if (error) throw error;
+      if (error) {
+        toast.error(error.message || "Error signing up");
+        throw error;
+      }
 
       if (authData?.user?.id) {
         const { error: profileError } = await supabase.from("profiles").insert({
@@ -59,13 +65,14 @@ export function SignUpForm({
           display_name: username,
         });
         if (profileError) {
-          // Non-fatal if DB trigger also creates profiles
           console.warn("Profile creation failed:", profileError.message);
+          toast.error(profileError.message || "Profile creation failed");
         }
       }
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
+      toast.error(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -115,7 +122,7 @@ export function SignUpForm({
             className="w-full mb-4 h-12 px-4 py-3 rounded-xl font-medium bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 text-gray-800 placeholder-gray-300 transition"
           />
 
-          {error && <p className="text-sm text-red-500 mb-2">{error}</p>}
+          {/* Errors displayed via toast */}
 
           {emailValid && username.trim() && password && repeatPassword && password === repeatPassword ? (
             <Button

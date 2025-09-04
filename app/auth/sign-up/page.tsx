@@ -9,7 +9,7 @@ export default function Page() {
         <Link href="/">
           <Image src="/finova-logo.svg" alt="Finova" className="cursor-pointer" width={200} height={100} />
         </Link>
-        <p className="text-zinc-800 text-center mb-6">Log in or sign up to get started.</p>
+        <p className="text-zinc-800 text-center mb-6">Sign up to get started.</p>
 
         <SignUpForm />
 
