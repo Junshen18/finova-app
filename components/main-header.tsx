@@ -39,7 +39,7 @@ export default function MainHeader({ profile }: MainHeaderProps) {
   return (
     <div className="flex flex-row items-center justify-between w-full pt-2">
       <div className="flex flex-row items-center justify-start w-full gap-2 px-2">
-      <Link href="/protected/profile" className="md:hidden w-10 h-10 rounded-full overflow-hidden border border-black/10" aria-label="Profile">
+      <Link href="/protected/profile" className="md:hidden w-11 h-11 rounded-full overflow-hidden border border-black/10" aria-label="Profile">
           {profile?.avatar_url ? (
             <img src={profile.avatar_url} alt="Profile avatar" className="w-full h-full object-cover" />
           ) : (
@@ -50,11 +50,11 @@ export default function MainHeader({ profile }: MainHeaderProps) {
         </Link>
         <div className="flex flex-col items-start justify-center w-fit md:w-full">
           <div>
-            <h1 className="text-xs md:text-base font-medium opacity-70">{greeting}</h1>
+            <h1 className="text-sm md:text-base font-medium opacity-70">{greeting}</h1>
           </div>
           <SplitText
             text={`${profile?.display_name}.`}
-            className="text-sm md:text-lg font-semibold text-center"
+            className="text-base md:text-lg font-semibold text-center"
             delay={100}
             duration={0.3}
             ease="power3.out"

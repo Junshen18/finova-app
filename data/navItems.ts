@@ -67,11 +67,6 @@ export const navItemsMobile = [
     href: "/protected/groups",
     icon: "UserGroupIcon",
   },
-  {
-    label: "Games",
-    href: "/protected/games",
-    icon: "PuzzlePieceIcon",
-  },
   // {
   //   name: "Add Transaction",
   //   href: "/protected/add",
