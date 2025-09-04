@@ -1,13 +1,20 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Geist, Inter } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "@radix-ui/themes/styles.css";
 import "./globals.css";
 import { Toaster } from "sonner";
+import localFont from "next/font/local";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+});
+
+const grifterBold = localFont({
+  src: "../public/fonts/grifterbold.otf",
+  variable: "--font-grifter-bold",
+  display: "swap",
 });
 
 const inter = Inter({

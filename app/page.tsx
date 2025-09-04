@@ -6,6 +6,84 @@ import PlatformModal from "@/components/platform-modal";
 import { FaArrowRight } from "react-icons/fa6";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { motion, animate } from "framer-motion";
+
+function AnimatedNumber({ value, duration = 2 }: { value: number; duration?: number }) {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    const controls = animate(0, value, {
+      duration,
+      ease: "easeOut",
+      onUpdate: (v) => setDisplayValue(Math.floor(v)),
+    });
+    return () => controls.stop();
+  }, [value, duration]);
+
+  return <span>{displayValue.toLocaleString()}</span>;
+}
+
+function SplitBillGameDemo() {
+  const [participantNames, setParticipantNames] = useState<string[]>([
+    "You",
+    "Alex",
+    "Sam",
+    "Taylor",
+  ]);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [isSpinning, setIsSpinning] = useState(false);
+
+  const handleRandomDraw = () => {
+    if (participantNames.length === 0 || isSpinning) return;
+    setIsSpinning(true);
+    const targetIndex = Math.floor(Math.random() * participantNames.length);
+    setTimeout(() => {
+      setSelectedIndex(targetIndex);
+      setIsSpinning(false);
+    }, 1200);
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {participantNames.map((name, index) => (
+          <motion.div
+            key={name}
+            className="rounded-xl border bg-card/40 p-4 text-center"
+            animate={{
+              scale: selectedIndex === index ? 1.05 : 1,
+              boxShadow:
+                selectedIndex === index
+                  ? "0 0 0 4px rgba(233,254,82,0.35)"
+                  : "0 0 0 0px rgba(0,0,0,0)",
+            }}
+            transition={{ type: "spring", stiffness: 300, damping: 18 }}
+          >
+            <div className="h-16 w-full rounded-md bg-primary/10 flex items-center justify-center">
+              <span className="font-semibold">{name}</span>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+      <div className="flex items-center justify-center gap-3 mt-6">
+        <button
+          onClick={handleRandomDraw}
+          className="rounded-full bg-primary px-6 py-2 text-primary-foreground hover:bg-primary/90 transition-all duration-200 cursor-pointer"
+        >
+          Draw a card
+        </button>
+        <Link href="/auth/login" className="text-sm underline text-muted-foreground hover:text-foreground">
+          Invite friends / Try in groups
+        </Link>
+      </div>
+      {selectedIndex !== null && (
+        <div className="mt-3 text-center text-sm text-muted-foreground">
+          Loser pays: <span className="font-medium text-foreground">{participantNames[selectedIndex]}</span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Home() {
   const [modalOpen, setModalOpen] = useState(false);
@@ -27,26 +105,32 @@ export default function Home() {
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-[70px] md:h-[90px]">
               {/* Logo */}
-              <Image src="/finova-logo.svg" alt="Logo" width={185} height={42} className="w-[100px] h-[25px] md:w-[150px] md:h-[30px] object-contain cursor-pointer"/>
+              <>
+                <Image src="/finova-logo.svg" alt="Logo" width={185} height={42} className="w-[100px] h-[25px] md:w-[150px] md:h-[30px] object-contain cursor-pointer block dark:hidden"/>
+                <Image src="/finova-white-logo.svg" alt="Logo" width={185} height={42} className="w-[100px] h-[25px] md:w-[150px] md:h-[30px] object-contain cursor-pointer hidden dark:block"/>
+              </>
               {/* Desktop Navigation */}
               <div className="hidden sm:flex sm:items-center sm:space-x-8 font-[inter] font-medium text-base">
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
                   Features
                 </a>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
                   How it works
                 </a>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="#testimonials" className="text-muted-foreground hover:text-foreground transition-colors">
                   Testimonials
                 </a>
-                <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                  FAQs
+                <a href="#stats" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Stats
+                </a>
+                <a href="#game" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Games
                 </a>
               </div>
             <div className="flex items-center gap-6">
-              <div className="flex gap-2">
+              <div className=" gap-2 hidden md:flex">
                 <Link href="/auth/login" className="bg-secondary hover:bg-secondary/80 transition-all duration-200 text-secondary-foreground px-4 py-1 rounded-4xl whitespace-nowrap font-medium">Log In</Link>
-                <button className="bg-primary hover:bg-primary/90 transition-all duration-200 text-primary-foreground px-4 py-1 rounded-4xl whitespace-nowrap font-medium cursor-pointer" onClick={() => setModalOpen(true)}>Get Started</button>
+
               </div>
             </div>
 
@@ -65,95 +149,225 @@ export default function Home() {
       {/* Add margin-top to prevent content from going under fixed header */}
       <div className="pt-[90px]">
         {/* Hero Section */}
-        <section className="bg-background py-2 h-[550px]">
+        <section className="bg-background py-2 h-[550px] overflow-hidden">
           <div className="w-full h-full mx-auto px-4 sm:px-6 lg:px-8 relative flex items-center justify-center">
+            <motion.div
+              aria-hidden
+              className="absolute -top-16 -right-24 h-64 w-64 rounded-full bg-primary/20 blur-3xl"
+              animate={{ y: [0, -12, 0] }}
+              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <motion.div
+              aria-hidden
+              className="absolute -bottom-20 -left-16 h-72 w-72 rounded-full bg-primary/10 blur-3xl"
+              animate={{ y: [0, 12, 0] }}
+              transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+            />
             <Image src="/fimi.svg" alt="Fimi" width={300} height={280} className="w-[190px] h-[180px] md:w-[300px] md:h-[280px] absolute top-5 md:top-10 left-[50%] -translate-x-1/2 object-cover z-0" />
             <Image src="/herobg.svg" alt="Hero Background" fill className="hidden md:block absolute top-0 object-cover z-0" />
             <div className="pt-[50px] md:pt-[230px] text-center z-10 flex flex-col items-center justify-center gap-3">
-              <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl font-[grifterbold]">
-                Your All-in-One <br /> <span className="text-primary">Finance</span>Companion.
-              </h1>
-              <p className="md:max-w-2xl w-[320px] md:w-full mx-auto text-sm md:text-lg text-muted-foreground font-medium font-[inter]">
-              A smarter way to manage your money—track, split, and analyze your expenses effortlessly.
-              </p>
+              <motion.h1
+                className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl font-[grifterbold]"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+              >
+                Your All-in-One <br /> <span className="text-primary">Finance</span> Companion.
+              </motion.h1>
+              <motion.p
+                className="md:max-w-2xl w-[320px] md:w-full mx-auto text-sm md:text-lg text-muted-foreground font-medium font-[inter]"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
+              >
+                A smarter way to manage your money—track, split, and analyze your expenses effortlessly.
+              </motion.p>
 
-              <div className="rounded-full bg-primary hover:bg-primary/90 transition-all duration-200 px-6 py-3 h-[40px] md:h-[50px] font-medium text-[14px] md:text-lg font-[inter] text-primary-foreground cursor-pointer flex items-center justify-center gap-3">
-                <p>Get into Whitelist</p> <FaArrowRight />
-              </div>
+              <motion.div
+                className="rounded-full bg-primary hover:bg-primary/90 transition-all duration-200 px-6 py-3 h-[40px] md:h-[50px] font-medium text-[14px] md:text-lg font-[inter] text-primary-foreground cursor-pointer flex items-center justify-center gap-3"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35, duration: 0.5, ease: "easeOut" }}
+              >
+                <Link href="/auth/login" className="flex items-center gap-2 font-semibold">Get Started</Link> <FaArrowRight />
+              </motion.div>
             </div>
           </div>
         </section>
 
         {/* Features Section */}
-        <section className="py-24">
+        <section id="features" className="py-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
               <h2 className="text-3xl font-bold text-foreground sm:text-4xl font-[grifterbold]">
-              Track your Expenses in a whole new way
+              Track your finances in a whole new way
               </h2>
             </div>
             
             <div className="mt-20 grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-3">
-              {/* Feature 1 */}
-              <div className="flex flex-col items-center">
-                <div className="h-12 w-12 rounded-md bg-indigo-600 flex items-center justify-center">
-                  {/* Add icon here */}
-                </div>
-                <h3 className="mt-6 text-xl font-semibold text-foreground">
-                  Feature 1
-                </h3>
-                <p className="mt-2 text-center text-muted-foreground">
-                  Description of feature 1 and its benefits.
-                </p>
-              </div>
+              {[
+                {
+                  title: "Track Expenses Effortlessly",
+                  desc: "Capture spending in seconds. Auto-categorize and keep everything organized.",
+                },
+                {
+                  title: "Split Bills with Friends",
+                  desc: "Create groups, settle up, and see who owes what—no spreadsheets needed.",
+                },
+                {
+                  title: "AI-Powered Insights",
+                  desc: "Understand trends, get alerts, and optimize your budget automatically.",
+                },
+              ].map((f, i) => (
+                <motion.div
+                  key={f.title}
+                  className="flex flex-col items-center rounded-2xl border p-8 bg-card/30 backdrop-blur-sm"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ delay: i * 0.1, duration: 0.5, ease: "easeOut" }}
+                >
+                  <div className="h-12 w-12 rounded-md bg-primary/15 text-primary flex items-center justify-center">
+                    <span className="text-lg font-bold">{i + 1}</span>
+                  </div>
+                  <h3 className="mt-6 text-xl font-semibold text-foreground text-center">
+                    {f.title}
+                  </h3>
+                  <p className="mt-2 text-center text-muted-foreground">
+                    {f.desc}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
 
-              {/* Feature 2 */}
-              <div className="flex flex-col items-center">
-                <div className="h-12 w-12 rounded-md bg-indigo-600 flex items-center justify-center">
-                  {/* Add icon here */}
-                </div>
-                <h3 className="mt-6 text-xl font-semibold text-foreground">
-                  Feature 2
-                </h3>
-                <p className="mt-2 text-center text-muted-foreground">
-                  Description of feature 2 and its benefits.
-                </p>
-              </div>
+        {/* How it works */}
+        <section id="how-it-works" className="py-24">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <h2 className="text-3xl font-bold text-foreground sm:text-4xl font-[grifterbold]">
+                How it works
+              </h2>
+              <p className="mt-2 text-muted-foreground">Three simple steps to get clarity.</p>
+            </div>
+            <div className="mt-16 grid grid-cols-1 gap-6 md:grid-cols-3">
+              {[
+                {
+                  step: "1",
+                  title: "Connect accounts",
+                  desc: "Bring in your transactions or add them manually—your data, your control.",
+                },
+                {
+                  step: "2",
+                  title: "Track & split",
+                  desc: "Categorize spending, split with friends, and settle balances in-app.",
+                },
+                {
+                  step: "3",
+                  title: "Get insights",
+                  desc: "See trends, forecasts, and suggestions powered by AI analysis.",
+                },
+              ].map((s, i) => (
+                <motion.div
+                  key={s.step}
+                  className="rounded-2xl border p-6 bg-card/30 backdrop-blur-sm"
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ delay: i * 0.1, duration: 0.5, ease: "easeOut" }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold">
+                      {s.step}
+                    </div>
+                    <h3 className="text-lg font-semibold">{s.title}</h3>
+                  </div>
+                  <p className="mt-3 text-muted-foreground">{s.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
 
-              {/* Feature 3 */}
-              <div className="flex flex-col items-center">
-                <div className="h-12 w-12 rounded-md bg-indigo-600 flex items-center justify-center">
-                  {/* Add icon here */}
-                </div>
-                <h3 className="mt-6 text-xl font-semibold text-foreground">
-                  Feature 3
-                </h3>
-                <p className="mt-2 text-center text-muted-foreground">
-                  Description of feature 3 and its benefits.
-                </p>
+        {/* Stats */}
+        <section id="stats" className="py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 rounded-2xl border p-8 bg-card/30 backdrop-blur-sm text-center">
+              <div>
+                <div className="text-3xl font-bold"><AnimatedNumber value={12000} /></div>
+                <p className="text-muted-foreground mt-1">Transactions Tracked</p>
+              </div>
+              <div>
+                <div className="text-3xl font-bold"><AnimatedNumber value={850} /></div>
+                <p className="text-muted-foreground mt-1">Active Groups</p>
+              </div>
+              <div>
+                <div className="text-3xl font-bold"><AnimatedNumber value={98} /></div>
+                <p className="text-muted-foreground mt-1">Categories Covered</p>
+              </div>
+              <div>
+                <div className="text-3xl font-bold"><AnimatedNumber value={4} /></div>
+                <p className="text-muted-foreground mt-1">Platforms Supported</p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* CTA Section */}
-        {/* <section className="py-24 bg-white">
+        {/* Testimonials */}
+        <section id="testimonials" className="py-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">
-                Ready to get started?
+              <h2 className="text-3xl font-bold text-foreground sm:text-4xl font-[grifterbold]">
+                Loved by our users
               </h2>
-              <p className="mt-4 text-lg text-gray-500">
-                Join thousands of satisfied customers today.
-              </p>
-              <div className="mt-8">
-                <button className="rounded-md bg-indigo-600 px-8 py-4 text-lg text-white hover:bg-indigo-700">
-                  Sign Up Now
-                </button>
-              </div>
+              <p className="mt-2 text-muted-foreground">Real stories from people getting control over their money.</p>
+            </div>
+            <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
+              {[
+                {
+                  quote: "Finova made splitting expenses with my housemates painless.",
+                  author: "Avery",
+                },
+                {
+                  quote: "The insights helped me cut unnecessary spending by 20% in a month.",
+                  author: "Jordan",
+                },
+                {
+                  quote: "I love how quick it is to add expenses on the go.",
+                  author: "Riley",
+                },
+              ].map((t, i) => (
+                <motion.div
+                  key={t.author}
+                  className="rounded-2xl border p-6 bg-card/30 backdrop-blur-sm"
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ delay: i * 0.1, duration: 0.45, ease: "easeOut" }}
+                >
+                  <p className="text-base">“{t.quote}”</p>
+                  <p className="mt-4 text-sm text-muted-foreground">— {t.author}</p>
+                </motion.div>
+              ))}
             </div>
           </div>
-        </section> */}
+        </section>
+
+        {/* Split Bill Game */}
+        <section id="game" className="py-24">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-foreground sm:text-4xl font-[grifterbold]">
+                Split Bill Game (Demo)
+              </h2>
+              <p className="mt-2 text-muted-foreground">
+                Invite your friends or play within your group. Draw a random “card” to decide who pays.
+              </p>
+            </div>
+            <SplitBillGameDemo />
+          </div>
+        </section>
 
         {/* Footer */}
         <footer className="py-12">
