@@ -17,7 +17,7 @@ export function FloatingActionButton() {
     <>
       {mounted &&
         createPortal(
-          <div className="fixed inset-x-0 md:bottom-6 bottom-8 z-50 flex justify-center pointer-events-none">
+          <div className="fixed inset-x-0 md:inset-x-auto md:bottom-6 bottom-5 md:right-6 z-50 flex justify-center pointer-events-none">
             <div
               onClick={() => setModalOpen(true)}
               className="pointer-events-auto w-14 h-14 rounded-full bg-[#E9FE52] text-black hover:bg-[#E9FE52]/90 shadow-lg flex justify-center items-center hover:scale-110 transition-all duration-300 cursor-pointer"

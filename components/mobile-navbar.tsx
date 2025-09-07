@@ -4,7 +4,7 @@ import { PlusCircleIcon, HomeIcon, DocumentCurrencyDollarIcon, UserCircleIcon, W
 
 export function MobileNavbar({ onAddTransaction }: { onAddTransaction: () => void }) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-transparent px-2 py-1 md:hidden h-20">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-transparent px-2 py-1 md:hidden h-fit">
       <div className="relative w-full bg-ring rounded-2xl h-14 shadow-lg">
         <div className="grid grid-cols-5 items-center w-full bg-card rounded-2xl h-14 relative z-10 px-2">
           {/* Left two items */}

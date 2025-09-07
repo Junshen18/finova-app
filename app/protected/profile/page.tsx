@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import Link from "next/link";
 
-type Category = { id: string; name: string };
+type Category = { id: string; name: string; is_default?: boolean };
+
+function getAvatarObjectPath(input: string): string | null {
+  if (!input) return null;
+  // If it's already a relative path, normalize and return
+  if (!/^https?:\/\//i.test(input)) {
+    return input.replace(/^avatars\//, "");
+  }
+  try {
+    const url = new URL(input);
+    // Matches: /storage/v1/object/{public|sign|}/avatars/<path>
+    const match = url.pathname.match(/\/storage\/v1\/object\/(?:public|sign)?\/?avatars\/(.+)$/);
+    if (match && match[1]) {
+      return decodeURIComponent(match[1]);
+    }
+  } catch {}
+  return null;
+}
 
 export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
@@ -30,11 +47,7 @@ export default function ProfilePage() {
   const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
   const [newExpenseCategory, setNewExpenseCategory] = useState("");
   const [newIncomeCategory, setNewIncomeCategory] = useState("");
-
-  const currencyOptions = useMemo(
-    () => ["SGD", "USD", "EUR", "GBP", "JPY", "MYR", "IDR"],
-    [],
-  );
+  const [currencyOptions, setCurrencyOptions] = useState<string[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -55,16 +68,33 @@ export default function ProfilePage() {
 
         setDisplayName(profile?.display_name || "");
         setPlan(profile?.plan || "free");
-        setAvatarUrl(profile?.avatar_url || null);
+
+        // Public bucket: use stored public URL directly
+        setAvatarUrl((profile?.avatar_url as string | null) || null);
 
         // currency priority: profile.currency -> localStorage -> default
         const stored = typeof window !== "undefined" ? localStorage.getItem("preferred_currency") : null;
-        setCurrency(profile?.currency || stored || "SGD");
+        setCurrency(profile?.currency || stored || "MYR");
 
         await Promise.all([fetchExpenseCategories(user.id), fetchIncomeCategories(user.id)]);
       } finally {
         setLoading(false);
       }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("currencies")
+          .select("code")
+          .order("code", { ascending: true });
+        if (!error && data) {
+          setCurrencyOptions(data.map((c: { code: string }) => c.code));
+        }
+      } catch {}
     })();
   }, []);
 
@@ -116,25 +146,52 @@ export default function ProfilePage() {
     }
   }
 
+  async function handleCurrencyChange(newCurrency: string) {
+    setCurrency(newCurrency);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("profiles")
+        .update({ currency: newCurrency })
+        .eq("user_id", userId as string);
+      if (error) throw error;
+      try { localStorage.setItem("preferred_currency", newCurrency); } catch {}
+      toast.success("Currency updated");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to update currency");
+    }
+  }
+
   async function handleAvatarSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !userId) return;
     setAvatarUploading(true);
     try {
       const supabase = createClient();
-      const filePath = `avatars/${userId}/${Date.now()}-${file.name}`;
-      const { error: uploadError } = await supabase.storage.from("avatars").upload(filePath, file);
+      const previousAvatarUrl = avatarUrl;
+      const ext = file.name.split(".").pop() || "bin";
+      const filePath = `${userId}_avatar/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase
+        .storage
+        .from("avatars")
+        .upload(filePath, file, { contentType: file.type, upsert: false });
       if (uploadError) throw uploadError;
+      // Get public URL and save/display it
       const { data: publicUrlData } = supabase.storage.from("avatars").getPublicUrl(filePath);
       const publicUrl = publicUrlData?.publicUrl;
       if (!publicUrl) throw new Error("Could not get public URL");
       setAvatarUrl(publicUrl);
-      // Save immediately
       const { error: updateError } = await supabase
         .from("profiles")
         .update({ avatar_url: publicUrl })
         .eq("user_id", userId);
       if (updateError) throw updateError;
+      if (previousAvatarUrl) {
+        const oldPath = getAvatarObjectPath(previousAvatarUrl);
+        if (oldPath) {
+          await supabase.storage.from("avatars").remove([oldPath]);
+        }
+      }
       toast.success("Avatar updated");
     } catch (err: any) {
       toast.error(err?.message || "Failed to upload avatar");
@@ -178,6 +235,12 @@ export default function ProfilePage() {
   }
 
   async function removeCategory(kind: "expense" | "income", id: string) {
+    const list = kind === "expense" ? expenseCategories : incomeCategories;
+    const toRemove = list.find((c) => c.id === id);
+    if (toRemove?.is_default) {
+      toast.error("Default categories cannot be removed");
+      return;
+    }
     const table = kind === "expense" ? "expense_categories" : "income_categories";
     const supabase = createClient();
     const { error } = await supabase.from(table).delete().eq("id", id);
@@ -254,7 +317,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs text-muted-foreground">Currency</label>
-                  <Select value={currency} onValueChange={setCurrency}>
+                  <Select value={currency} onValueChange={handleCurrencyChange}>
                     <SelectTrigger className="w-full bg-white/10 border-white/10 text-foreground">
                       <SelectValue placeholder="Currency" />
                     </SelectTrigger>
@@ -286,11 +349,13 @@ export default function ProfilePage() {
                     />
                     <Button size="sm" onClick={() => addCategory("expense")} disabled={!newExpenseCategory.trim()}>Add</Button>
                   </div>
-                  <ul className="flex flex-wrap gap-2">
+                  <ul className="rounded-md border border-white/10 divide-y divide-white/10">
                     {expenseCategories.map((c) => (
-                      <li key={c.id} className="flex items-center gap-2 rounded-md border border-white/10 px-2 py-1 text-sm">
-                        <span>{c.name}</span>
-                        <Button size="sm" variant="ghost" onClick={() => removeCategory("expense", c.id)}>Remove</Button>
+                      <li key={c.id} className="flex items-center justify-between px-3 py-2 text-sm">
+                        <span className="truncate">{c.name}</span>
+                        {!c.is_default && (
+                          <Button size="sm" variant="ghost" onClick={() => removeCategory("expense", c.id)}>Remove</Button>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -305,11 +370,13 @@ export default function ProfilePage() {
                     />
                     <Button size="sm" onClick={() => addCategory("income")} disabled={!newIncomeCategory.trim()}>Add</Button>
                   </div>
-                  <ul className="flex flex-wrap gap-2">
+                  <ul className="rounded-md border border-white/10 divide-y divide-white/10">
                     {incomeCategories.map((c) => (
-                      <li key={c.id} className="flex items-center gap-2 rounded-md border border-white/10 px-2 py-1 text-sm">
-                        <span>{c.name}</span>
-                        <Button size="sm" variant="ghost" onClick={() => removeCategory("income", c.id)}>Remove</Button>
+                      <li key={c.id} className="flex items-center justify-between px-3 py-2 text-sm">
+                        <span className="truncate">{c.name}</span>
+                        {!c.is_default && (
+                          <Button size="sm" variant="ghost" onClick={() => removeCategory("income", c.id)}>Remove</Button>
+                        )}
                       </li>
                     ))}
                   </ul>
