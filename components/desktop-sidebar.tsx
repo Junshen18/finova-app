@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import { navItems } from "@/data/navItems";
+import { FaCircleUser } from "react-icons/fa6";
 
 type IconType = React.ComponentType<React.SVGProps<SVGSVGElement>>;
 interface NavItem {
@@ -17,16 +18,6 @@ interface NavItem {
 
 export function DesktopSidebar({ profile }: { profile: any }) {
   const pathname = usePathname();
-
-    // const navItems: NavItem[] = [
-    //   { href: "/protected", label: "Dashboard", icon: HomeIcon },
-    //   { href: "/protected/transactions", label: "Transactions", icon: ListBulletIcon },
-    //   { href: "/protected/accounts", label: "Accounts", icon: WalletIcon },
-    //   { href: "/protected/ai-analysis", label: "AI Analysis", icon: SparklesIcon },
-    //   { href: "/protected/groups", label: "Groups", icon: UserGroupIcon },
-    //   { href: "/protected/games", label: "Games", icon: PuzzlePieceIcon },
-    //   { href: "/protected/settings", label: "Settings", icon: Cog6ToothIcon },
-    // ];
 
   const adminItems = profile?.role === 'admin' ? [
     { 
@@ -96,9 +87,15 @@ export function DesktopSidebar({ profile }: { profile: any }) {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 backdrop-blur-sm w-full text-left hover:bg-white/10">
-            <div className="w-8 h-8 bg-[#E9FE52] rounded-full flex items-center justify-center shadow-lg">
-              <UserCircleIcon className="h-5 w-5 text-black" />
-            </div>
+          <div className="w-8 h-8 rounded-full overflow-hidden border border-black/10">
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="Profile avatar" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-white/10">
+                <FaCircleUser className="text-foreground/70 text-lg" />
+              </div>
+            )}
+          </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-white">{profile?.display_name || 'User'}</p>
               <p className="text-xs text-gray-400">Premium Member</p>

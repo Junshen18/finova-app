@@ -6,6 +6,7 @@ export function useProfile() {
   const [profile, setProfile] = useState<{
     display_name: string;
     email: string;
+    avatar_url?: string | null;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,9 +20,9 @@ export function useProfile() {
     try {
       const raw = typeof window !== "undefined" ? localStorage.getItem(PROFILE_CACHE_KEY) : null;
       if (raw) {
-        const cached = JSON.parse(raw) as { display_name: string; email: string; cachedAt: number };
+        const cached = JSON.parse(raw) as { display_name: string; email: string; avatar_url?: string | null; cachedAt: number };
         if (cached?.display_name) {
-          setProfile({ display_name: cached.display_name, email: cached.email });
+          setProfile({ display_name: cached.display_name, email: cached.email, avatar_url: cached.avatar_url });
         }
       }
     } catch {}
@@ -50,14 +51,15 @@ export function useProfile() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("display_name")
+        .select("display_name,avatar_url")
         .eq("user_id", userId)
         .single();
 
       if (error) {
         setError(error.message);
       } else {
-        const fresh = { display_name: data.display_name, email };
+        console.log(data);
+        const fresh = { display_name: data.display_name, email, avatar_url: data.avatar_url };
         setProfile(fresh);
         try {
           localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify({ ...fresh, cachedAt: Date.now() }));
