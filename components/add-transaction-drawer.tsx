@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Tabs, TabsTrigger, TabsList, TabsContent } from "./ui/tabs";
 import { AddIncomeForm } from "./add-income-form";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AddExpenseForm } from "./add-expense-form";
 import { AddTransferForm } from "./add-transfer-form";
 import { X } from "lucide-react";
@@ -13,7 +13,9 @@ export function AddTransactionDrawer({ open, onClose }: { open: boolean, onClose
   const [activeTab, setActiveTab] = useState("expense");
 
   // Sync drawer open state with prop
-  if (drawerOpen !== open) setDrawerOpen(open);
+  useEffect(() => {
+    setDrawerOpen(open);
+  }, [open]);
 
   // Use modal for desktop/tablet, drawer for mobile
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
@@ -25,8 +27,8 @@ export function AddTransactionDrawer({ open, onClose }: { open: boolean, onClose
 
   if (isMobile) {
     return (
-      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <DrawerContent className="max-h-[90vh] bg-background">
+      <Drawer open={drawerOpen} onOpenChange={(next) => { setDrawerOpen(next); if (!next) onClose(); }} dismissible>
+        <DrawerContent className="max-h-[100dvh] h-[96dvh] bg-background overflow-y-auto overscroll-contain pb-[calc(env(safe-area-inset-bottom)+1rem)]">
           <DrawerHeader className="border-b border-border pb-4">
             <DrawerTitle className="text-xl font-bold text-foreground mb-4">Add Transaction</DrawerTitle>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -51,7 +53,7 @@ export function AddTransactionDrawer({ open, onClose }: { open: boolean, onClose
                 </TabsTrigger>
               </TabsList>
               
-              <div className="mt-6">
+              <div className="mt-2 overflow-y-auto max-h-[calc(96dvh-160px)] pr-1 pb-4">
                 <TabsContent value="income" className="space-y-4">
                   <AddIncomeForm onCancel={handleClose} />
                 </TabsContent>

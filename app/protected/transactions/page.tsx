@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FaArrowUp, FaArrowDown, FaExchangeAlt, FaFilter, FaSearch, FaWallet, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { createClient } from "@/lib/supabase/client";
+import TransactionDetailsDialog, { TransactionRef } from "@/components/transaction-details-dialog";
 
 type Transaction = {
   id: number;
@@ -28,6 +29,16 @@ export default function TransactionsPage() {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
+
+  // Details dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<TransactionRef | null>(null);
+
+  // Mobile swipe state
+  const [isMobile, setIsMobile] = useState(false);
+  const [swipeStartX, setSwipeStartX] = useState<number | null>(null);
+  const [swipedRowId, setSwipedRowId] = useState<string | null>(null);
+  const [swipeOffset, setSwipeOffset] = useState(0);
 
   // Parse a date string safely:
   // - If it's a date-only string (YYYY-MM-DD), interpret as local calendar date (avoid UTC shift)
@@ -162,6 +173,19 @@ export default function TransactionsPage() {
   }, []);
 
   useEffect(() => {
+    const update = () => setIsMobile(typeof window !== 'undefined' && window.innerWidth < 768);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
+  const deleteTransaction = async (type: Transaction["type"], id: number) => {
+    const supabase = createClient();
+    const table = type === "expense" ? "expense_transactions" : type === "income" ? "income_transactions" : "transfer_transactions";
+    await supabase.from(table).delete().eq("id", id);
+  };
+
+  useEffect(() => {
     const supabase = createClient();
     let channel: any;
     (async () => {
@@ -251,7 +275,7 @@ export default function TransactionsPage() {
 
     if (diffDays === 0) return "Today";
     if (diffDays === 1) return "Yesterday";
-    if (diffDays > 1 && diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays > 1 && diffDays < 4) return `${diffDays} days ago`;
     return date.toLocaleDateString();
   };
 
@@ -441,7 +465,7 @@ export default function TransactionsPage() {
 
         {/* Transactions List */}
         <Card className="border-0 shadow-sm bg-white/5 backdrop-blur-sm w-full">
-          <CardHeader className="pb-4">
+          <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg font-semibold text-white">
                 {loading ? 'Loading...' : `All Transactions (${filteredTransactions.length})`}
@@ -459,7 +483,7 @@ export default function TransactionsPage() {
                 scrollbarColor: '#4b5563 rgba(55, 65, 81, 0.3)'
               }}
             >
-              <div className="space-y-6 p-6 ">
+              <div className="space-y-6 px-6 pb-6">
                 {filteredTransactions.length === 0 ? (
                   <div className="text-center py-8 text-gray-400">
                     <p>No transactions found matching your filters.</p>
@@ -468,43 +492,113 @@ export default function TransactionsPage() {
                   groupedTransactions.map((group) => (
                     <div key={group.key} className="space-y-3">
                       <div className="text-xs uppercase tracking-wide text-gray-400">{formatDate(group.key)}</div>
-                      {group.items.map((transaction) => (
-                        <div 
-                          key={`${transaction.type}-${transaction.id}`}
-                          className="flex items-center justify-between p-4 rounded-lg hover:bg-white/10 transition-all duration-200 border border-white/5"
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className={`p-3 rounded-full ${getTransactionColor(transaction.type)}`}>
-                              {getTransactionIcon(transaction.type)}
-                            </div>
-                            <div className="flex flex-col">
-                              <p className="font-medium text-white">{transaction.title}</p>
-                              {transaction.category && transaction.category !== transaction.title && (
-                                <p className="text-sm text-gray-300">{transaction.category}</p>
-                              )}
-                              {transaction.description && transaction.description !== transaction.title && (
-                                <p className="text-xs text-gray-400 mt-1">{transaction.description}</p>
-                              )}
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className={`font-semibold text-lg ${
-                              transaction.type === 'income' ? 'text-emerald-400' : 
-                              transaction.type === 'expense' ? 'text-red-400' : 'text-blue-400'
-                            }`}>
-                              {transaction.type === 'income' ? '+' : transaction.type === 'expense' ? '-' : ''}RM {Math.abs(transaction.amount).toFixed(2)}
-                            </p>
-                            {transaction.status && (
-                              <Badge 
-                                variant={transaction.status === 'completed' ? 'default' : 'secondary'}
-                                className="text-xs mt-1"
+                      {group.items.map((transaction) => {
+                        const rowId = `${transaction.type}-${transaction.id}`;
+                        const isActiveSwipe = isMobile && swipedRowId === rowId;
+                        const currentOffset = isActiveSwipe ? swipeOffset : 0;
+                        const handleRowClick = () => {
+                          setSelectedTransaction({ id: transaction.id, type: transaction.type });
+                          setDialogOpen(true);
+                        };
+                        const handleTouchStart = (e: React.TouchEvent) => {
+                          if (!isMobile) return;
+                          setSwipeStartX(e.touches[0].clientX);
+                          setSwipedRowId(rowId);
+                          setSwipeOffset(0);
+                        };
+                        const handleTouchMove = (e: React.TouchEvent) => {
+                          if (!isMobile) return;
+                          if (swipeStartX == null || swipedRowId !== rowId) return;
+                          const dx = e.touches[0].clientX - swipeStartX;
+                          if (dx < 0) {
+                            const clamped = Math.max(dx, -120);
+                            setSwipeOffset(clamped);
+                          } else {
+                            setSwipeOffset(0);
+                          }
+                        };
+                        const handleTouchEnd = async () => {
+                          if (!isMobile) return;
+                          if (swipedRowId !== rowId) return;
+                          const thresholdOpen = -60;
+                          const thresholdDelete = -120;
+                          if (swipeOffset <= thresholdDelete + 5) {
+                            await deleteTransaction(transaction.type, transaction.id);
+                            setSwipedRowId(null);
+                            setSwipeOffset(0);
+                            fetchTransactions();
+                          } else if (swipeOffset <= thresholdOpen) {
+                            setSwipeOffset(-80);
+                          } else {
+                            setSwipedRowId(null);
+                            setSwipeOffset(0);
+                          }
+                        };
+                        return (
+                          <div key={rowId} className="relative">
+                            {/* Actions behind (mobile) */}
+                            <div className="absolute inset-y-0 right-0 flex items-center gap-2 pr-2 md:hidden">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => { e.stopPropagation(); setSelectedTransaction({ id: transaction.id, type: transaction.type }); setDialogOpen(true); }}
+                                className="bg-blue-500/10 border-blue-500/40 text-blue-300"
                               >
-                                {transaction.status}
-                              </Badge>
-                            )}
+                                Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={async (e) => { e.stopPropagation(); await deleteTransaction(transaction.type, transaction.id); fetchTransactions(); setSwipedRowId(null); setSwipeOffset(0); }}
+                                className="bg-red-500/10 border-red-500/40 text-red-400"
+                              >
+                                Delete
+                              </Button>
+                            </div>
+
+                            {/* Foreground row */}
+                            <div
+                              onClick={handleRowClick}
+                              onTouchStart={handleTouchStart}
+                              onTouchMove={handleTouchMove}
+                              onTouchEnd={handleTouchEnd}
+                              className="flex items-center justify-between p-4 rounded-lg cursor-pointer hover:bg-white/10 transition-all duration-200 border border-white/5 will-change-transform"
+                              style={{ transform: `translateX(${currentOffset}px)` }}
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className={`p-3 rounded-full ${getTransactionColor(transaction.type)}`}>
+                                  {getTransactionIcon(transaction.type)}
+                                </div>
+                                <div className="flex flex-col">
+                                  <p className="font-medium text-white">{transaction.title}</p>
+                                  {transaction.category && transaction.category !== transaction.title && (
+                                    <p className="text-sm text-gray-300">{transaction.category}</p>
+                                  )}
+                                  {transaction.description && transaction.description !== transaction.title && (
+                                    <p className="text-xs text-gray-400 mt-1">{transaction.description}</p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className={`font-semibold text-lg ${
+                                  transaction.type === 'income' ? 'text-emerald-400' : 
+                                  transaction.type === 'expense' ? 'text-red-400' : 'text-blue-400'
+                                }`}>
+                                  {transaction.type === 'income' ? '+' : transaction.type === 'expense' ? '-' : ''}RM {Math.abs(transaction.amount).toFixed(2)}
+                                </p>
+                                {transaction.status && (
+                                  <Badge 
+                                    variant={transaction.status === 'completed' ? 'default' : 'secondary'}
+                                    className="text-xs mt-1"
+                                  >
+                                    {transaction.status}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ))
                 )}
@@ -512,6 +606,13 @@ export default function TransactionsPage() {
             </div>
           </CardContent>
         </Card>
+        <TransactionDetailsDialog
+          open={dialogOpen}
+          transaction={selectedTransaction}
+          onOpenChange={(o) => { setDialogOpen(o); if (!o) { /* reset swipe */ setSwipedRowId(null); setSwipeOffset(0); } }}
+          onUpdated={() => fetchTransactions()}
+          onDeleted={() => fetchTransactions()}
+        />
       </div>
     </div>
   );
