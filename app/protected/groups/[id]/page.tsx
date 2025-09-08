@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { EllipsisHorizontalIcon, CheckBadgeIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { ArrowUpCircle, Pencil } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -73,6 +74,22 @@ export default function GroupDetailPage() {
   const [settleAmount, setSettleAmount] = useState<string>("");
   const [settleNote, setSettleNote] = useState<string>("");
   const [authorized, setAuthorized] = useState<boolean | null>(null);
+
+  // Helper: fetch group expenses visible to current user via RPC with fallback
+  const fetchGroupExpenses = async (supabase: ReturnType<typeof createClient>, groupId: number) => {
+    try {
+      const { data, error } = await (supabase as any).rpc("get_group_expenses", { p_group_id: groupId });
+      if (error) throw error;
+      return (data || []) as any[];
+    } catch (_) {
+      const { data } = await supabase
+        .from("expense_transactions")
+        .select("id, description, amount, date, user_id")
+        .eq("group_id", groupId)
+        .order("date", { ascending: false });
+      return (data || []) as any[];
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -145,14 +162,9 @@ export default function GroupDetailPage() {
       console.log("[GroupDetail] members normalized", normalized);
       setMembers(normalized);
       setBillPayer(normalized[0]?.user_id || "");
-      // simple activity feed placeholder: recent expenses in this group
-      const { data: exps } = await supabase
-        .from("expense_transactions")
-        .select("id, description, amount, date, user_id")
-        .eq("group_id", groupId)
-        .order("date", { ascending: false })
-        .limit(20);
-      const expenseFeed: Activity[] = (exps || []).map((e: any) => {
+      // simple activity feed placeholder: recent expenses in this group (via RPC)
+      const exps = await fetchGroupExpenses(supabase, groupId);
+      const expenseFeed: Activity[] = (exps || []).slice(0,20).map((e: any) => {
         const payerName = normalized.find((m) => m.user_id === e.user_id)?.display_name || "Someone";
         return { id: e.id, created_at: e.date, user_id: e.user_id, text: `Paid by ${payerName}: ${e.description || "Expense"} • $${e.amount}` };
       });
@@ -975,56 +987,78 @@ export default function GroupDetailPage() {
           {!selectedExpense ? (
             <div className="text-sm text-muted-foreground">Loading...</div>
           ) : (
-            <div className="space-y-4 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Paid by</span>
-                <span className="font-medium">{members.find(m => m.user_id === selectedExpense.user_id)?.display_name || "Unknown"}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Date</span>
-                <span className="font-medium">{new Date(selectedExpense.date).toLocaleDateString()}</span>
-              </div>
-              <div>
-                <span className="text-muted-foreground block mb-1">Description</span>
-                {isEditingExpense ? (
-                  <Input value={editExpenseDesc} onChange={(e) => setEditExpenseDesc(e.target.value)} className="bg-form-bg text-foreground border-form-border" />
-                ) : (
-                  <div>{selectedExpense.description || "-"}</div>
-                )}
-              </div>
-              <div>
-                <span className="text-muted-foreground block mb-1">Amount</span>
-                {isEditingExpense ? (
-                  <Input type="number" value={editExpenseAmount} onChange={(e) => setEditExpenseAmount(e.target.value)} className="bg-form-bg text-foreground border-form-border" />
-                ) : (
-                  <div>${Number(selectedExpense.amount).toFixed(2)}</div>
-                )}
-    </div>
+            <div className="space-y-4">
+              {!isEditingExpense && (
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setIsEditingExpense(true)}
+                      className="h-9 w-9 bg-form-bg text-foreground border-form-border hover:bg-form-hover"
+                      aria-label="Edit"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="w-14 h-14 rounded-full bg-red-500/15 text-red-400 flex items-center justify-center">
+                      <ArrowUpCircle className="w-8 h-8" />
+                    </div>
+                    <div className="text-3xl font-bold tracking-tight text-foreground">
+                      -RM {Number(selectedExpense.amount || 0).toFixed(2)}
+                    </div>
+                    <div className="text-base font-medium text-foreground">
+                      Paid by {members.find(m => m.user_id === selectedExpense.user_id)?.display_name || "Unknown"}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(selectedExpense.date).toLocaleDateString()}
+                    </div>
+                    {selectedExpense.description && (
+                      <div className="text-sm text-muted-foreground max-w-md leading-relaxed">{selectedExpense.description}</div>
+                    )}
+                  </div>
 
-              {selectedExpenseSplits.length > 0 && !isEditingExpense && (
-                <div>
-                  <span className="text-muted-foreground block mb-1">Split</span>
-                  <ul className="space-y-1">
-                    {selectedExpenseSplits.map((s) => {
-                      const member = members.find((m) => m.user_id === s.user_id);
-                      const label = s.user_id === currentUserId ? "You" : (member?.display_name || "Member");
-                      const labelClass = s.user_id === currentUserId ? "font-medium" : undefined;
-                      return (
-                        <li key={s.user_id} className="flex items-center justify-between">
-                          <span className={labelClass}>{label}</span>
-                          <span>${s.amount.toFixed(2)}</span>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                  {selectedExpenseSplits.length > 0 && (
+                    <div className="text-sm">
+                      <span className="text-muted-foreground block mb-1">Split</span>
+                      <ul className="space-y-1">
+                        {selectedExpenseSplits.map((s) => {
+                          const member = members.find((m) => m.user_id === s.user_id);
+                          const label = s.user_id === currentUserId ? "You" : (member?.display_name || "Member");
+                          const labelClass = s.user_id === currentUserId ? "font-medium" : undefined;
+                          return (
+                            <li key={s.user_id} className="flex items-center justify-between">
+                              <span className={labelClass}>{label}</span>
+                              <span>${s.amount.toFixed(2)}</span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <Button variant="outline" onClick={() => setViewOpen(false)} className="bg-form-bg text-foreground border-form-border hover:bg-form-hover">Close</Button>
+                  </div>
                 </div>
               )}
 
-              <div className="flex gap-2 pt-1">
-                {!isEditingExpense ? (
-                  <Button onClick={() => setIsEditingExpense(true)} variant="outline" className="bg-white/10 border-white/20">Edit</Button>
-                ) : (
-                  <>
+              {isEditingExpense && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground">Description</div>
+                      <Input value={editExpenseDesc} onChange={(e) => setEditExpenseDesc(e.target.value)} className="bg-form-bg text-foreground border-form-border" />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground">Amount</div>
+                      <Input type="number" value={editExpenseAmount} onChange={(e) => setEditExpenseAmount(e.target.value)} className="bg-form-bg text-foreground border-form-border" />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <Button onClick={() => setIsEditingExpense(false)} variant="outline" className="bg-form-bg text-foreground border-form-border hover:bg-form-hover">Cancel</Button>
                     <Button
                       onClick={async () => {
                         try {
@@ -1058,10 +1092,9 @@ export default function GroupDetailPage() {
                     >
                       Save
                     </Button>
-                    <Button onClick={() => setIsEditingExpense(false)} variant="outline">Cancel</Button>
-                  </>
-                )}
-              </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

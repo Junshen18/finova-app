@@ -34,6 +34,8 @@ export default function GroupsPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [owedByGroup, setOwedByGroup] = useState<Record<number, number>>({});
+  const [hasExpenseByGroup, setHasExpenseByGroup] = useState<Record<number, boolean>>({});
 
   const [addOpen, setAddOpen] = useState(false);
   const [targetGroup, setTargetGroup] = useState<Group | null>(null);
@@ -96,6 +98,9 @@ export default function GroupsPage() {
       } else {
         setMembers([]);
       }
+
+      // Compute owed amounts summary for each group
+      await computeOwedForGroups(groupList);
 
       setLoading(false);
     })();
@@ -181,6 +186,78 @@ export default function GroupsPage() {
     });
     const groupList = Object.values(uniqueGroups);
     setGroups(groupList);
+    await computeOwedForGroups(groupList);
+  };
+
+  // Compute how much current user owes per group (net of settlements)
+  const computeOwedForGroups = async (groupList: Group[]) => {
+    try {
+      const supabase = createClient();
+      const { data: auth } = await supabase.auth.getUser();
+      const current = auth.user?.id;
+      if (!current || groupList.length === 0) {
+        setOwedByGroup({});
+        setHasExpenseByGroup({});
+        return;
+      }
+      const groupIds = groupList.map(g => g.id);
+      // Load all expenses for these groups
+      const { data: expenses } = await supabase
+        .from("expense_transactions")
+        .select("id, user_id, group_id")
+        .in("group_id", groupIds);
+      const expenseIds = (expenses || []).map((e: any) => e.id);
+      const payerByExpense: Record<number, string> = Object.fromEntries(
+        (expenses || []).map((e: any) => [Number(e.id), String(e.user_id)])
+      );
+      const groupByExpense: Record<number, number> = Object.fromEntries(
+        (expenses || []).map((e: any) => [Number(e.id), Number(e.group_id)])
+      );
+      const hasExp: Record<number, boolean> = {};
+      (expenses || []).forEach((e: any) => { hasExp[Number(e.group_id)] = true; });
+
+      let oweMap: Record<number, number> = {};
+
+      if (expenseIds.length > 0) {
+        // Your splits in those expenses
+        const { data: splits } = await supabase
+          .from("expense_splits")
+          .select("expense_id, user_id, amount")
+          .in("expense_id", expenseIds)
+          .eq("user_id", current);
+        (splits || []).forEach((s: any) => {
+          const expId = Number(s.expense_id);
+          const gid = groupByExpense[expId];
+          const payer = payerByExpense[expId];
+          if (!gid) return;
+          if (payer && payer !== current) {
+            oweMap[gid] = (oweMap[gid] || 0) + Number(s.amount || 0);
+          }
+        });
+      }
+
+      // Subtract settlements you've paid to others in each group
+      const { data: mySts } = await supabase
+        .from("split_settlements")
+        .select("group_id, amount")
+        .in("group_id", groupIds)
+        .eq("from_user_id", current);
+      (mySts || []).forEach((s: any) => {
+        const gid = Number(s.group_id);
+        oweMap[gid] = (oweMap[gid] || 0) - Number(s.amount || 0);
+      });
+
+      // Round to 2 dp for display stability
+      const rounded: Record<number, number> = {};
+      groupIds.forEach((gid) => {
+        const v = oweMap[gid] || 0;
+        rounded[gid] = Math.round(v * 100) / 100;
+      });
+      setOwedByGroup(rounded);
+      setHasExpenseByGroup(hasExp);
+    } catch (_) {
+      // keep previous values
+    }
   };
 
   return (
@@ -233,13 +310,21 @@ export default function GroupsPage() {
                   </div>
                 </Link>
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    className="bg-white/10 border-white/20 text-foreground hover:bg-white/20"
-                    onClick={() => openAddMembers(g)}
-                  >
-                    Add members
-                  </Button>
+                  {hasExpenseByGroup[g.id] ? (
+                    (() => {
+                      const owed = owedByGroup[g.id] ?? 0;
+                      if (Math.abs(owed) < 0.005) {
+                        return <span className="text-xs text-muted-foreground">Settled up</span>;
+                      }
+                      return (
+                        <span className="text-xs">
+                          You owe <span className="font-medium">RM {Math.abs(owed).toFixed(2)}</span>
+                        </span>
+                      );
+                    })()
+                  ) : (
+                    <span className="text-xs text-muted-foreground">No record</span>
+                  )}
                 </div>
               </CardContent>
             </Card>
