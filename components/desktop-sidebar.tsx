@@ -104,13 +104,10 @@ export function DesktopSidebar({ profile }: { profile: any }) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="min-w-[180px] w-[208px]">
           <DropdownMenuItem asChild>
-            <Link href="/protected/profile">Profile</Link>
+            <Link href="/protected/profile">Profile Settings</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/protected/subscription">Subscription</Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/protected/settings">Settings</Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={async () => { const supabase = createClient(); await supabase.auth.signOut(); window.location.href = '/auth/login'; }}>

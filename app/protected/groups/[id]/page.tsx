@@ -118,16 +118,31 @@ export default function GroupDetailPage() {
       const { data: group } = await supabase.from("split_groups").select("name, created_by").eq("id", groupId).single();
       setGroupName(group?.name || "");
       setCreatedBy(group?.created_by || "");
-      // members
-      const { data: mems } = await supabase
+      // members (two-step: split_group_member → profiles)
+      console.log("[GroupDetail] Fetching members for group", groupId, "as user", auth.user?.id);
+      const { data: memRows, error: memsError } = await supabase
         .from("split_group_member")
-        .select("user_id, user:profiles(display_name, avatar_url)")
+        .select("user_id")
         .eq("group_id", groupId);
-      const normalized: Member[] = (mems || []).map((m: any) => ({
-        user_id: m.user_id,
-        display_name: m.user?.display_name || "",
-        avatar_url: m.user?.avatar_url || null,
+      console.log("[GroupDetail] member rows", memRows, "error", memsError);
+      const memberIds: string[] = (memRows || []).map((r: any) => r.user_id);
+      let profilesMap: Record<string, { display_name: string; avatar_url: string | null }> = {};
+      if (memberIds.length > 0) {
+        const { data: profilesRows, error: profilesError } = await supabase
+          .from("profiles")
+          .select("user_id, display_name, avatar_url")
+          .in("user_id", memberIds);
+        console.log("[GroupDetail] profiles rows", profilesRows, "error", profilesError);
+        profilesMap = Object.fromEntries(
+          (profilesRows || []).map((p: any) => [p.user_id, { display_name: p.display_name || "Member", avatar_url: p.avatar_url || null }])
+        );
+      }
+      const normalized: Member[] = memberIds.map((uid) => ({
+        user_id: uid,
+        display_name: profilesMap[uid]?.display_name || "Member",
+        avatar_url: profilesMap[uid]?.avatar_url || null,
       }));
+      console.log("[GroupDetail] members normalized", normalized);
       setMembers(normalized);
       setBillPayer(normalized[0]?.user_id || "");
       // simple activity feed placeholder: recent expenses in this group
@@ -464,17 +479,32 @@ export default function GroupDetailPage() {
       const rows = ids.map((uid) => ({ group_id: groupId, user_id: uid }));
       const { error } = await supabase.from("split_group_member").upsert(rows, { onConflict: "group_id,user_id" });
       if (error) throw error;
-      // Refresh members
-      const { data: mems } = await supabase
+      // Refresh members (two-step)
+      console.log("[GroupDetail] Refreshing members after add for group", groupId);
+      const { data: memRows2, error: memsError2 } = await supabase
         .from("split_group_member")
-        .select("user_id, user:profiles(display_name, avatar_url)")
+        .select("user_id")
         .eq("group_id", groupId);
-      const normalized: Member[] = (mems || []).map((m: any) => ({
-        user_id: m.user_id,
-        display_name: m.user?.display_name || "",
-        avatar_url: m.user?.avatar_url || null,
+      console.log("[GroupDetail] member rows (after add)", memRows2, "error", memsError2);
+      const memberIds2: string[] = (memRows2 || []).map((r: any) => r.user_id);
+      let profilesMap2: Record<string, { display_name: string; avatar_url: string | null }> = {};
+      if (memberIds2.length > 0) {
+        const { data: profilesRows2, error: profilesError2 } = await supabase
+          .from("profiles")
+          .select("id, display_name, avatar_url")
+          .in("id", memberIds2);
+        console.log("[GroupDetail] profiles rows (after add)", profilesRows2, "error", profilesError2);
+        profilesMap2 = Object.fromEntries(
+          (profilesRows2 || []).map((p: any) => [p.id, { display_name: p.display_name || "Member", avatar_url: p.avatar_url || null }])
+        );
+      }
+      const normalized2: Member[] = memberIds2.map((uid) => ({
+        user_id: uid,
+        display_name: profilesMap2[uid]?.display_name || "Member",
+        avatar_url: profilesMap2[uid]?.avatar_url || null,
       }));
-      setMembers(normalized);
+      console.log("[GroupDetail] members normalized (after add)", normalized2);
+      setMembers(normalized2);
       toast.success("Members added");
       setAddOpen(false);
     } catch (err: any) {
@@ -507,12 +537,13 @@ export default function GroupDetailPage() {
           ) : (
             <ul className="space-y-2 text-sm">
               {activities.map((a) => (
-                <li key={a.id} className="flex items-center justify-between">
+                <li key={`${a.created_at}-${a.id}`} className="flex items-center justify-between">
                   <button
                     type="button"
                     className="text-left hover:underline"
                     onClick={async () => {
                       try {
+                        if (a.text?.startsWith("Settlement:")) return;
                         const supabase = createClient();
                         const { data, error } = await supabase
                           .from("expense_transactions")
