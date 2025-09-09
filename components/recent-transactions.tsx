@@ -89,6 +89,10 @@ export function RecentTransactions() {
               </div>
             </div>
           ))
+        ) : transactions.length === 0 ? (
+          <div className="p-6 text-center text-gray-400">
+            No transactions yet. Start by adding a transaction.
+          </div>
         ) : (
         transactions.map((transaction) => (
           <div key={`${transaction.type}-${transaction.id}`} className="flex items-center justify-between p-3 rounded-lg hover:bg-white/10 transition-all duration-200">

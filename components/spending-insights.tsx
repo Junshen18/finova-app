@@ -106,7 +106,7 @@ export function SpendingInsights() {
         <div className="pt-4 border-t border-gray-700">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-300">Total Spent</span>
-            <span className="text-lg font-bold text-white">{loading ? <Skeleton className="h-5 w-24" /> : <>RM {total.toFixed(2)}</>}</span>
+            <span className="text-sm font-bold text-white">{loading ? <Skeleton className="h-5 w-24" /> : <>RM {total.toFixed(2)}</>}</span>
           </div>
         </div>
       </CardContent>

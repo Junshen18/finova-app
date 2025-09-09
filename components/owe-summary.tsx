@@ -13,14 +13,14 @@ export function OweSummary() {
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) { setLoading(false); return; }
 
       const { data: memberships } = await supabase
         .from("split_group_member")
         .select("group_id, group:split_groups(id,name)")
         .eq("user_id", user.id);
       const groupIds = Array.from(new Set((memberships || []).map((m: any) => m.group_id)));
-      if (groupIds.length === 0) { setYouOwe([]); setOweYou([]); return; }
+      if (groupIds.length === 0) { setYouOwe([]); setOweYou([]); setLoading(false); return; }
 
       const { data: exps } = await supabase
         .from("expense_transactions")
