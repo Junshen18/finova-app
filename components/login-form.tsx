@@ -34,12 +34,36 @@ export function LoginForm({
     const supabase = createClient();
     if (!isSignUpMode) {
       // Try to sign in
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       if (!error) {
-        console.log("success");
+        // Ensure profile exists post-login
+        try {
+          const userId = signInData.user?.id;
+          if (userId) {
+            const { data: existing, error: fetchErr } = await supabase
+              .from("profiles")
+              .select("user_id")
+              .eq("user_id", userId)
+              .single();
+            if (fetchErr && fetchErr.code !== "PGRST116") {
+              // non-row-not-found error
+              console.warn("Fetch profile error:", fetchErr.message);
+            }
+            if (!existing) {
+              const { error: insertErr } = await supabase.from("profiles").insert({
+                user_id: userId,
+                email,
+                display_name: username || email.split("@")[0],
+              });
+              if (insertErr) {
+                console.warn("Create profile error:", insertErr.message);
+              }
+            }
+          }
+        } catch {}
         router.push("/protected");
         setIsLoading(false);
         return;
@@ -71,7 +95,7 @@ export function LoginForm({
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/protected`,
+            emailRedirectTo: `${window.location.origin}/auth/login`,
             data: {
               username,
             },
@@ -80,20 +104,9 @@ export function LoginForm({
         if (error) {
           console.error("Error signing up", error);
           toast.error(error.message || "Error signing up");
-        }else{
-          const { error: profileError } = await supabase.from("profiles").insert({
-            user_id: data.user?.id,
-            email,
-            display_name: username,
-          });
-          if (profileError) {
-            console.error("Error creating profile", profileError);
-            toast.error(profileError.message || "Error creating profile");
-          }else{
-            console.log("Profile created successfully");
-            router.push("/auth/sign-up-success");
-          }
-        };
+        } else {
+          router.push("/auth/sign-up-success");
+        }
       } catch (error: any) {
         setError(error.message || "An error occurred");
         toast.error(error.message || "An error occurred");

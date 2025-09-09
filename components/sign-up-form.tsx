@@ -49,25 +49,13 @@ export function SignUpForm({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/protected`,
+          emailRedirectTo: `${window.location.origin}/auth/login`,
           data: { username },
         },
       });
       if (error) {
         toast.error(error.message || "Error signing up");
         throw error;
-      }
-
-      if (authData?.user?.id) {
-        const { error: profileError } = await supabase.from("profiles").insert({
-          user_id: authData.user.id,
-          email,
-          display_name: username,
-        });
-        if (profileError) {
-          console.warn("Profile creation failed:", profileError.message);
-          toast.error(profileError.message || "Profile creation failed");
-        }
       }
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {
