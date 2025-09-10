@@ -11,9 +11,10 @@ import Sidebar from "@/components/side-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Suspense } from "react";
 import Link from "next/link";
-import { SplitSquareHorizontal, BarChart3, Wallet, Users } from "lucide-react";
+import { SplitSquareHorizontal, BarChart3, Wallet } from "lucide-react";
 import { OweSummary } from "@/components/owe-summary";
 import { MonthlyTrend } from "@/components/monthly-trend";
+import { FriendsQuickAction } from "@/components/friends-quick-action";
 
 export default async function DashboardPage() {
     const supabase = await createClient();
@@ -64,10 +65,7 @@ export default async function DashboardPage() {
                               <Wallet className="w-5 h-5 mb-1" />
                               <span className="text-sm font-medium">Accounts</span>
                             </Link>
-                            <Link href="/protected/friends" className="flex flex-col items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-900 py-4 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition">
-                              <Users className="w-5 h-5 mb-1" />
-                              <span className="text-sm font-medium">Friends</span>
-                            </Link>
+                            <FriendsQuickAction />
                           </div>
                         </div>
                         
