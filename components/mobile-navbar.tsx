@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { navItemsMobile } from "../data/navItems";
 import { PlusCircleIcon, HomeIcon, DocumentCurrencyDollarIcon, UserCircleIcon, WalletIcon, SparklesIcon, Cog6ToothIcon, PuzzlePieceIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import { MobileFriendNotificationBadge } from "./mobile-friend-notification-badge";
 
 export function MobileNavbar({ onAddTransaction }: { onAddTransaction: () => void }) {
   return (
@@ -23,9 +24,10 @@ export function MobileNavbar({ onAddTransaction }: { onAddTransaction: () => voi
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex flex-col items-center justify-center h-12"
+                className="relative flex flex-col items-center justify-center h-12"
               >
                 <Icon className="h-7 w-7 text-foreground/50" />
+                {item.label === "Groups" && <MobileFriendNotificationBadge />}
               </Link>
             );
           })}
@@ -49,9 +51,10 @@ export function MobileNavbar({ onAddTransaction }: { onAddTransaction: () => voi
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex flex-col items-center justify-center h-12"
+                className="relative flex flex-col items-center justify-center h-12"
               >
                 <Icon className="h-7 w-7 text-foreground/50" />
+                {item.label === "Groups" && <MobileFriendNotificationBadge />}
               </Link>
             );
           })}

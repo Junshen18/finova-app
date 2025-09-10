@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { UserCircleIcon, HomeIcon, ListBulletIcon, Cog6ToothIcon, WalletIcon, UserGroupIcon, SparklesIcon, PuzzlePieceIcon, DocumentCurrencyDollarIcon } from "@heroicons/react/24/outline";
 import { NotificationBadge } from "@/components/notification-badge";
+import { FriendNotificationBadge } from "@/components/friend-notification-badge";
 import { usePathname } from "next/navigation";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
@@ -78,6 +79,7 @@ export function DesktopSidebar({ profile }: { profile: any }) {
                     {item.label}
                   </span>
                   {item.showBadge && <NotificationBadge />}
+                  {item.label === "Groups" && <FriendNotificationBadge />}
                 </div>
               </Link>
             );
