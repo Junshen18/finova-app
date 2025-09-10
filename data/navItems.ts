@@ -34,11 +34,11 @@ export const navItems = [
   //   href: "/protected/add",
   //   icon: "PlusCircleIcon",
   // },
-  {
-    label: "Settings",
-    href: "/protected/settings",
-    icon: "Cog6ToothIcon",
-  },
+  // {
+  //   label: "Settings",
+  //   href: "/protected/settings",
+  //   icon: "Cog6ToothIcon",
+  // },
 ]; 
 
 export const navItemsMobile = [
