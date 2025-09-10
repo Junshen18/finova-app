@@ -26,6 +26,12 @@ export function DesktopSidebar({ profile }: { profile: any }) {
       icon: UserGroupIcon,
       showBadge: true 
     },
+    {
+      href: "/protected/admin/users",
+      label: "Users",
+      icon: UserGroupIcon,
+      showBadge: false
+    }
   ] : [];
 
   return (

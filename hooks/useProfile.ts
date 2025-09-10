@@ -7,6 +7,7 @@ export function useProfile() {
     display_name: string;
     email: string;
     avatar_url?: string | null;
+    role?: string | null;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,9 +21,9 @@ export function useProfile() {
     try {
       const raw = typeof window !== "undefined" ? localStorage.getItem(PROFILE_CACHE_KEY) : null;
       if (raw) {
-        const cached = JSON.parse(raw) as { display_name: string; email: string; avatar_url?: string | null; cachedAt: number };
+        const cached = JSON.parse(raw) as { display_name: string; email: string; avatar_url?: string | null; role?: string | null; cachedAt: number };
         if (cached?.display_name) {
-          setProfile({ display_name: cached.display_name, email: cached.email, avatar_url: cached.avatar_url });
+          setProfile({ display_name: cached.display_name, email: cached.email, avatar_url: cached.avatar_url, role: cached.role });
         }
       }
     } catch {}
@@ -51,7 +52,7 @@ export function useProfile() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("display_name,avatar_url")
+        .select("display_name,avatar_url,role")
         .eq("user_id", userId)
         .single();
 
@@ -59,7 +60,7 @@ export function useProfile() {
         setError(error.message);
       } else {
         console.log(data);
-        const fresh = { display_name: data.display_name, email, avatar_url: data.avatar_url };
+        const fresh = { display_name: data.display_name, email, avatar_url: data.avatar_url, role: (data as any).role };
         setProfile(fresh);
         try {
           localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify({ ...fresh, cachedAt: Date.now() }));
