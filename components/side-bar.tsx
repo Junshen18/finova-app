@@ -13,9 +13,20 @@ export default function Sidebar() {
   return (
     <>
       <DesktopSidebar profile={profile} />
-      <MobileNavbar onAddTransaction={() => setModalOpen(true)} />
-      <AddTransactionDrawer open={modalOpen} onClose={() => setModalOpen(false)} />
-      <FloatingActionButton />
+      {profile?.role === 'admin' ? (
+        <MobileNavbar onAddTransaction={() => {}} items={[
+          { label: 'Admin', href: '/protected/admin', icon: 'HomeIcon' },
+          { label: 'Users', href: '/protected/admin/users', icon: 'UserGroupIcon' },
+          { label: 'Audit', href: '/protected/admin/audit-logs', icon: 'FaRegFileAlt' },
+          { label: 'Profile', href: '/protected/profile', icon: 'UserCircleIcon' }
+        ]} />
+      ) : (
+        <>
+          <MobileNavbar onAddTransaction={() => setModalOpen(true)} />
+          <AddTransactionDrawer open={modalOpen} onClose={() => setModalOpen(false)} />
+          <FloatingActionButton />
+        </>
+      )}
     </>
   );
 }

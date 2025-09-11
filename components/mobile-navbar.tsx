@@ -1,14 +1,18 @@
 import Link from "next/link";
 import { navItemsMobile } from "../data/navItems";
-import { PlusCircleIcon, HomeIcon, DocumentCurrencyDollarIcon, UserCircleIcon, WalletIcon, SparklesIcon, Cog6ToothIcon, PuzzlePieceIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import { PlusCircleIcon, HomeIcon, DocumentCurrencyDollarIcon, UserCircleIcon, WalletIcon, SparklesIcon, Cog6ToothIcon, PuzzlePieceIcon, UserGroupIcon, ListBulletIcon } from "@heroicons/react/24/outline";
+import { FaRegFileAlt } from "react-icons/fa";
 
-export function MobileNavbar({ onAddTransaction }: { onAddTransaction: () => void }) {
+type MobileItem = { label: string; href: string; icon: string };
+
+export function MobileNavbar({ onAddTransaction, items }: { onAddTransaction: () => void; items?: MobileItem[] }) {
+  const list = items && items.length > 0 ? items : navItemsMobile;
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-transparent px-2 py-1 md:hidden h-fit">
       <div className="relative w-full bg-ring rounded-2xl h-14 shadow-lg">
         <div className="grid grid-cols-5 items-center w-full bg-card rounded-2xl h-14 relative z-10 px-2">
           {/* Left two items */}
-          {navItemsMobile.slice(0, 2).map((item) => {
+          {list.slice(0, 2).map((item) => {
             const Icon =
               item.icon === "HomeIcon"
                 ? HomeIcon
@@ -16,6 +20,10 @@ export function MobileNavbar({ onAddTransaction }: { onAddTransaction: () => voi
                 ? SparklesIcon
                 : item.icon === "UserGroupIcon"
                 ? UserGroupIcon
+                : item.icon === "ListBulletIcon"
+                ? ListBulletIcon
+                : item.icon === "FaRegFileAlt"
+                ? (FaRegFileAlt as unknown as React.ComponentType<any>)
                 : item.icon === "UserCircleIcon"
                 ? UserCircleIcon
                 : UserCircleIcon;
@@ -34,7 +42,7 @@ export function MobileNavbar({ onAddTransaction }: { onAddTransaction: () => voi
           <div />
 
           {/* Right two items */}
-          {navItemsMobile.slice(2).map((item) => {
+          {list.slice(2).map((item) => {
             const Icon =
               item.icon === "HomeIcon"
                 ? HomeIcon
@@ -42,6 +50,10 @@ export function MobileNavbar({ onAddTransaction }: { onAddTransaction: () => voi
                 ? SparklesIcon
                 : item.icon === "UserGroupIcon"
                 ? UserGroupIcon
+                : item.icon === "ListBulletIcon"
+                ? ListBulletIcon
+                : item.icon === "FaRegFileAlt"
+                ? (FaRegFileAlt as unknown as React.ComponentType<any>)
                 : item.icon === "UserCircleIcon"
                 ? UserCircleIcon
                 : UserCircleIcon;
