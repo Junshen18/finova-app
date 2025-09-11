@@ -7,6 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { createClient } from "@/lib/supabase/client";
 import { navItems } from "@/data/navItems";
 import { FaCircleUser } from "react-icons/fa6";
+import { FaRegFileAlt } from "react-icons/fa";
 
 type IconType = React.ComponentType<React.SVGProps<SVGSVGElement>>;
 interface NavItem {
@@ -20,13 +21,27 @@ export function DesktopSidebar({ profile }: { profile: any }) {
   const pathname = usePathname();
 
   const adminItems = profile?.role === 'admin' ? [
-    { 
-      href: "/protected/admin/applications", 
-      label: "Professional Applications", 
-      icon: UserGroupIcon,
-      showBadge: true 
+    {
+      href: "/protected/admin",
+      label: "Admin Dashboard",
+      icon: HomeIcon,
+      showBadge: false
     },
+    {
+      href: "/protected/admin/users",
+      label: "Users ",
+      icon: UserGroupIcon,
+      showBadge: false
+    },
+    {
+      href: "/protected/admin/audit-logs",
+      label: "Audit Logs",
+      icon: FaRegFileAlt as unknown as string,
+      showBadge: false
+    }
   ] : [];
+
+  const itemsToRender = profile?.role === 'admin' ? adminItems : navItems;
 
   return (
     <aside className="hidden fixed md:flex w-64 bg-black text-white flex-col justify-between px-6 py-8 h-screen">
@@ -41,11 +56,15 @@ export function DesktopSidebar({ profile }: { profile: any }) {
           />
         </div>
         <nav className="flex flex-col gap-3">
-          {[...navItems, ...adminItems].map((item: NavItem) => {
+          {itemsToRender.map((item: NavItem) => {
             // Check if current path matches this item's href
-            const isActive = pathname === item.href || 
+            let isActive = pathname === item.href || 
               (item.href === "/protected" && pathname === "/protected/dashboard") ||
               (item.href !== "/protected" && pathname.startsWith(item.href));
+            // Do not highlight Admin Dashboard when in deeper admin routes (e.g., /protected/admin/users)
+            if (item.href === "/protected/admin" && pathname.startsWith("/protected/admin/") ) {
+              isActive = false;
+            }
             const iconMap: Record<string, IconType> = {
               HomeIcon,
               DocumentCurrencyDollarIcon,

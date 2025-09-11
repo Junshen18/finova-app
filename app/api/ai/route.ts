@@ -75,21 +75,26 @@ function buildContext(pref: Preferences) {
   const expenses = Math.abs(
     txs.filter((t) => t.type === "expense").reduce((a, t) => a + t.amount, 0)
   );
-  const sample = txs
-    .slice(0, 8)
+  const transfers = Math.abs(
+    txs.filter((t) => t.type === "transfer").reduce((a, t) => a + t.amount, 0)
+  );
+  // include a bounded transaction history for grounding
+  const history = txs
+    .slice(0, 200)
     .map((t) => ({
       title: pref.redactMerchants ? "[REDACTED]" : t.title,
       amount: t.amount,
       category: t.category,
+      type: t.type,
       date: t.date,
     }));
   const contextObj = {
-    aggregates: { totalBalance: total, totalIncome: income, totalExpenses: expenses },
-    sampleTransactions: sample,
+    aggregates: { totalBalance: total, totalIncome: income, totalExpenses: expenses, totalTransfers: transfers },
+    transactions: history,
     includeReceipts: !!pref.includeReceipts,
     notes: pref.redactMerchants ? "Merchants redacted" : "Merchants shown",
   };
-  return JSON.stringify(contextObj);
+  return { obj: contextObj, text: JSON.stringify(contextObj) };
 }
 
 export async function POST(req: Request) {
@@ -124,7 +129,22 @@ export async function POST(req: Request) {
       ...preferences,
     };
 
-    const context = buildContext(prefs);
+    const { obj: contextObj, text: context } = buildContext(prefs);
+
+    // Debug log what's being sent (no secrets)
+    try {
+      const messagesPreview = (messages || []).map((m) => ({ role: m.role, content: (m.content || '').slice(0, 200) }));
+      const txCount = contextObj.transactions?.length || 0;
+      console.log("[AI] Outgoing request", {
+        time: new Date().toISOString(),
+        preferences: prefs,
+        aggregates: contextObj.aggregates,
+        txCount,
+        firstTx: txCount ? contextObj.transactions[0] : null,
+        lastTx: txCount ? contextObj.transactions[txCount - 1] : null,
+        messagesPreview,
+      });
+    } catch {}
 
     const contents = [
       {
@@ -132,7 +152,11 @@ export async function POST(req: Request) {
         parts: [
           {
             text:
-              `You are an AI finance assistant. Follow rules: 1) Info only, no financial advice claims; 2) Ground answers only in provided user context; 3) When possible, show tiny citations like totals or example transactions; 4) Respect privacy preferences (merchants may be redacted).\n` +
+              `You are a personal finance expert advisor. Follow rules strictly: \n` +
+              `1) Provide information and education only (no financial advice claims).\n` +
+              `2) Ground every answer ONLY in the provided user context. If data is missing, say so.\n` +
+              `3) Prefer concise, actionable steps; include tiny citations (totals or example transactions) when relevant.\n` +
+              `4) Respect privacy preferences (merchants/notes may be redacted).\n` +
               `User context (JSON): ${context}`,
           },
         ],
