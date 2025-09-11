@@ -13,6 +13,8 @@ import { FaCamera, FaUpload } from "react-icons/fa";
 import { useRef } from "react";
 import { toast } from "sonner";
 import { SelectionModal } from "./selection-modal";
+import Tesseract from "tesseract.js";
+import * as chrono from "chrono-node";
 
 interface AddExpenseFormProps {
   onCancel?: () => void;
@@ -35,6 +37,15 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [ocrLoading, setOcrLoading] = useState(false);
+  const [ocrDialogOpen, setOcrDialogOpen] = useState(false);
+  const [ocrSuggestion, setOcrSuggestion] = useState<{
+    merchantName: string;
+    totalAmount: string;
+    transactionDate: Date | null;
+    fullText: string;
+    averageConfidence: number | null;
+  } | null>(null);
 
   const toIsoAtNoon = (d: Date) => {
     const copy = new Date(d);
@@ -159,7 +170,8 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setReceiptImage(reader.result as string);
-        setForm((prev) => ({ ...prev, img_url: reader.result as string }));
+        // Keep preview only; actual upload happens on submit via Supabase storage
+        setFile(file);
       };
       reader.readAsDataURL(file);
     }
@@ -186,26 +198,162 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
     }
   };
 
+  async function runOcrOnImage(dataUrl: string): Promise<{
+    text: string;
+    averageConfidence: number | null;
+  }> {
+    const result = await Tesseract.recognize(dataUrl, "eng", {
+      logger: () => {},
+    });
+    const averageConfidence = (result as any)?.data?.confidence ?? null;
+    return { text: (result as any).data?.text || "", averageConfidence };
+  }
+
+  function extractTotalAmountFromText(text: string): string {
+    const lines = text
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+
+    const currencyAmountRegex = /(?:RM|MYR|SGD|S\$|USD|\$|€|£)?\s*([0-9]+(?:[.,][0-9]{2})?)/i;
+    const totalKeywords = ["total", "amount", "balance due", "grand total", "subtotal"];
+
+    let candidateAmounts: number[] = [];
+
+    for (const line of lines) {
+      const lower = line.toLowerCase();
+      const hasKeyword = totalKeywords.some((kw) => lower.includes(kw));
+      const matches = Array.from(line.matchAll(currencyAmountRegex));
+      for (const m of matches) {
+        const raw = m[1];
+        if (!raw) continue;
+        const normalized = raw.replace(/,/g, ".");
+        const value = parseFloat(normalized);
+        if (!Number.isNaN(value)) {
+          // Give a small boost if near keyword
+          candidateAmounts.push(hasKeyword ? value + 0.0001 : value);
+        }
+      }
+    }
+
+    if (candidateAmounts.length === 0) return "";
+
+    const best = Math.max(...candidateAmounts);
+    const bestStr = (Math.round((best % 1) * 100) === 0
+      ? Math.floor(best).toString()
+      : best.toFixed(2));
+    return bestStr;
+  }
+
+  function extractMerchantNameFromText(text: string): string {
+    const lines = text
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+
+    const ignorePatterns = /(receipt|invoice|tax|gst|vat|total|amount|cashier|change|tel|phone|order|table|item)/i;
+
+    for (const line of lines) {
+      const letters = line.replace(/[^A-Za-z]/g, "");
+      if (letters.length >= 3 && !ignorePatterns.test(line)) {
+        return line;
+      }
+    }
+    return lines[0] || "";
+  }
+
+  function extractDateFromText(text: string): Date | null {
+    const d = chrono.parseDate(text);
+    if (d) return d;
+    // Fallback regexes for common formats
+    const dateRegexes = [
+      /(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})/,
+      /(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/,
+    ];
+    for (const rx of dateRegexes) {
+      const m = text.match(rx);
+      if (m) {
+        const parts = m.slice(1).map((p) => parseInt(p, 10));
+        if (rx === dateRegexes[0]) {
+          const [dd, mm, yyyy] = parts;
+          const year = yyyy < 100 ? 2000 + yyyy : yyyy;
+          return new Date(year, (mm || 1) - 1, dd || 1);
+        } else {
+          const [yyyy, mm, dd] = parts;
+          return new Date(yyyy, (mm || 1) - 1, dd || 1);
+        }
+      }
+    }
+    return null;
+  }
+
+  const handleExtractFromReceipt = async () => {
+    if (!receiptImage) {
+      toast.error("Please upload or capture a receipt image first.");
+      return;
+    }
+    try {
+      setOcrLoading(true);
+      const { text, averageConfidence } = await runOcrOnImage(receiptImage);
+      const merchantName = extractMerchantNameFromText(text);
+      const totalAmount = extractTotalAmountFromText(text);
+      const transactionDate = extractDateFromText(text);
+
+      setOcrSuggestion({
+        merchantName,
+        totalAmount,
+        transactionDate,
+        fullText: text,
+        averageConfidence,
+      });
+      setOcrDialogOpen(true);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to extract text from receipt.");
+    } finally {
+      setOcrLoading(false);
+    }
+  };
+
+  const applyOcrSuggestionToForm = () => {
+    if (!ocrSuggestion) return;
+    if (ocrSuggestion.transactionDate) {
+      setDate(ocrSuggestion.transactionDate);
+    }
+    setForm((prev) => ({
+      ...prev,
+      amount: ocrSuggestion.totalAmount || prev.amount,
+      description: prev.description || ocrSuggestion.merchantName,
+    }));
+    setOcrDialogOpen(false);
+    toast.success("OCR suggestions applied.");
+  };
+
   const uploadReceipt = async (
     file: File,
     userId: string
   ): Promise<string | null> => {
-    const supabase = createClient();
-    const filePath = `receipts/${userId}/${Date.now()}-${file.name}`;
-    const { data, error } = await supabase.storage
-      .from("expense-receipts")
-      .upload(filePath, file);
-
-    if (error) {
-      console.error("Image upload failed:", error.message);
+    try {
+      const supabase = createClient();
+      const ext = file.name.split(".").pop() || "png";
+      const filePath = `receipts/${userId}/${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2)}.${ext}`;
+      const { error } = await supabase.storage
+        .from("expense-receipts")
+        .upload(filePath, file, { upsert: false, cacheControl: "3600", contentType: file.type });
+      if (error) {
+        console.error("Image upload failed:", error.message);
+        return null;
+      }
+      const { data: publicUrlData } = supabase.storage
+        .from("expense-receipts")
+        .getPublicUrl(filePath);
+      return publicUrlData?.publicUrl || null;
+    } catch (e: any) {
+      console.error("Image upload failed:", e?.message || e);
       return null;
     }
-
-    const { data: publicUrlData } = supabase.storage
-      .from("expense-receipts")
-      .getPublicUrl(filePath);
-
-    return publicUrlData?.publicUrl || null;
   };
 
   const sortedCategories = [
@@ -231,9 +379,15 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
         const uploadedPath = await uploadReceipt(file, form.user_id);
         if (!uploadedPath) {
           toast.error("Failed to upload receipt.");
+          setLoading(false);
           return;
         }
         imgPath = uploadedPath;
+      } else if (receiptImage && !imgPath) {
+        // If preview exists but no File (rare), block to ensure only URL is stored
+        toast.error("Please reselect the receipt image to upload.");
+        setLoading(false);
+        return;
       }
 
       const res = await fetch("/api/expenses", {
@@ -242,7 +396,7 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
         body: JSON.stringify({
           ...form,
           category: form.category_id,
-          img_url: imgPath,
+          img_url: imgPath || undefined,
           account_id: form.account_id ? parseInt(form.account_id) : undefined,
           group_id: form.group_id ? parseInt(form.group_id) : undefined,
           client_request_id: Date.now(),
@@ -290,7 +444,7 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
             {/* Receipt Section */}
             <div className="space-y-3">
               {/* <h3 className="text-sm font-medium text-foreground">Receipt</h3> */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <Button
                   type="button"
                   className="w-full bg-form-bg text-foreground border-form-border border justify-start px-3 py-2 hover:bg-form-hover"
@@ -325,6 +479,18 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
                 />
               </div>
             )}
+
+            {/* OCR Actions */}
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                onClick={handleExtractFromReceipt}
+                disabled={!receiptImage || ocrLoading}
+                className="bg-form-bg text-foreground border-form-border border hover:bg-form-hover"
+              >
+                {ocrLoading ? "Extracting..." : "Extract details from receipt"}
+              </Button>
+            </div>
 
             {/* Form Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -526,6 +692,33 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
         }}
         title="Select an Account"
       />
+
+      {/* OCR Review Dialog */}
+      <Dialog open={ocrDialogOpen} onOpenChange={setOcrDialogOpen}>
+        <DialogContent className="flex flex-col gap-4 max-w-lg bg-form-bg border-form-border">
+          <DialogTitle className="text-foreground">Review extracted details</DialogTitle>
+          {ocrSuggestion && (
+            <div className="space-y-2 text-sm text-foreground">
+              <div><span className="font-medium">Merchant:</span> {ocrSuggestion.merchantName || "—"}</div>
+              <div><span className="font-medium">Date:</span> {ocrSuggestion.transactionDate ? ocrSuggestion.transactionDate.toLocaleDateString() : "—"}</div>
+              <div><span className="font-medium">Total:</span> {ocrSuggestion.totalAmount || "—"}</div>
+              {ocrSuggestion.averageConfidence != null && (
+                <div className="text-xs text-muted-foreground">OCR confidence: {ocrSuggestion.averageConfidence.toFixed(0)}%</div>
+              )}
+              <div className="mt-2">
+                <div className="font-medium mb-1">Recognized text</div>
+                <div className="max-h-48 overflow-auto whitespace-pre-wrap p-2 rounded border border-form-border bg-form-bg">
+                  {ocrSuggestion.fullText}
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="flex gap-2 mt-2">
+            <Button onClick={applyOcrSuggestionToForm} className="flex-1 bg-[#E9FE52] text-black hover:bg-[#E9FE52]/90">Apply</Button>
+            <Button variant="outline" onClick={() => setOcrDialogOpen(false)} className="flex-1 bg-form-bg text-foreground border-form-border hover:bg-form-hover">Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

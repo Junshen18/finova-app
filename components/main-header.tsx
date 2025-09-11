@@ -1,10 +1,11 @@
 "use client";
 
-import { FaFire, FaRegBell, FaUserGroup, FaCircleUser } from "react-icons/fa6";
+import { FaFire, FaRegBell, FaGear, FaCircleUser } from "react-icons/fa6";
 import SplitText from "./ui/split-text";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+//
 
 interface MainHeaderProps {
     profile: {
@@ -22,6 +23,7 @@ export default function MainHeader({ profile }: MainHeaderProps) {
   }, []);
 
   const [pendingCount, setPendingCount] = useState<number>(0);
+  const [streak, setStreak] = useState<number>(0);
   useEffect(() => {
     (async () => {
       try {
@@ -30,6 +32,8 @@ export default function MainHeader({ profile }: MainHeaderProps) {
         if (!user) return;
         const { data, error } = await supabase.rpc("get_received_friend_requests");
         if (!error) setPendingCount((data || []).length || 0);
+        const { data: streakData } = await supabase.rpc("get_user_current_streak");
+        if (typeof streakData === "number") setStreak(streakData || 0);
       } catch {
         // ignore silently in header
       }
@@ -69,21 +73,16 @@ export default function MainHeader({ profile }: MainHeaderProps) {
       </div>
 
       <div className="flex flex-row items-center justify-end w-full gap-2 px-2">
-        {/* <div className="bg-white/10 rounded-lg p-2 flex flex-row items-center justify-center gap-1 border border-black/10">
+        <Link href="/protected/leaderboard" className="bg-white/10 rounded-lg p-2 flex flex-row items-center justify-center gap-1 border border-black/10">
           <FaFire className="text-orange-400 text-lg cursor-pointer" />
-          <div className="text-sm font-semibold text-orange-300">6</div>
-        </div> */}
+          <div className="text-sm font-semibold text-orange-300 tabular-nums">{streak}</div>
+        </Link>
         
-        <div className="bg-white/10 rounded-lg p-2 flex flex-row items-center justify-center gap-1 border border-black/10">
+        {/* <div className="bg-white/10 rounded-lg p-2 flex flex-row items-center justify-center gap-1 border border-black/10">
           <FaRegBell className="text-foreground/70 text-lg cursor-pointer" />
-        </div>
-        <Link href="/protected/friends" className="relative bg-white/10 rounded-lg p-2 flex flex-row items-center justify-center gap-1 border border-black/10">
-          <FaUserGroup className="text-foreground/70 text-lg cursor-pointer" />
-          {pendingCount > 0 && (
-            <span className="absolute -top-1 -right-1 px-1.5 min-w-[16px] h-4 rounded-full bg-red-500 text-[10px] leading-4 text-white font-semibold text-center ring-2 ring-black/20">
-              {pendingCount > 99 ? '99+' : pendingCount}
-            </span>
-          )}
+        </div> */}
+        <Link href="/protected/profile" className="relative bg-white/10 rounded-lg p-2 flex flex-row items-center justify-center gap-1 border border-black/10">
+          <FaGear className="text-foreground/70 text-lg cursor-pointer" />
         </Link>
         
       </div>
