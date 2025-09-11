@@ -48,6 +48,7 @@ export default function ProfilePage() {
   const [newExpenseCategory, setNewExpenseCategory] = useState("");
   const [newIncomeCategory, setNewIncomeCategory] = useState("");
   const [currencyOptions, setCurrencyOptions] = useState<string[]>([]);
+  const [role, setRole] = useState<string>("user");
 
   useEffect(() => {
     (async () => {
@@ -62,12 +63,13 @@ export default function ProfilePage() {
 
         const { data: profile } = await supabase
           .from("profiles")
-          .select("display_name, plan, currency, avatar_url")
+          .select("display_name, plan, currency, avatar_url, role")
           .eq("user_id", user.id)
           .single();
 
         setDisplayName(profile?.display_name || "");
         setPlan(profile?.plan || "free");
+        setRole((profile?.role as string) || "user");
 
         // Public bucket: use stored public URL directly
         setAvatarUrl((profile?.avatar_url as string | null) || null);
@@ -331,7 +333,8 @@ export default function ProfilePage() {
               </div>
             </section>
 
-            {/* Categories */}
+            {/* Categories (hidden for admins) */}
+            {role !== 'admin' && (
             <section className="space-y-3">
               <h2 className="text-base font-semibold">Categories</h2>
               <Tabs defaultValue="expense" className="w-full">
@@ -383,8 +386,10 @@ export default function ProfilePage() {
                 </TabsContent>
               </Tabs>
             </section>
+            )}
 
-            {/* Subscription */}
+            {/* Subscription (hidden for admins) */}
+            {role !== 'admin' && (
             <section className="space-y-2">
               <h2 className="text-base font-semibold">Subscription</h2>
               <p className="text-sm text-zinc-400">Current plan: <span className="text-foreground font-medium capitalize">{plan}</span></p>
@@ -394,8 +399,10 @@ export default function ProfilePage() {
                 </Button>
               </Link>
             </section>
+            )}
 
-            {/* Feedback & Support */}
+            {/* Feedback & Support (hidden for admins) */}
+            {role !== 'admin' && (
             <section className="space-y-2">
               <h2 className="text-base font-semibold">Support</h2>
               <div className="flex flex-col gap-2">
@@ -403,6 +410,7 @@ export default function ProfilePage() {
                 <Link href="mailto:support@finova.app" className="underline underline-offset-4 text-sm">Contact support</Link>
               </div>
             </section>
+            )}
 
             {/* Session */}
             <section className="space-y-2">

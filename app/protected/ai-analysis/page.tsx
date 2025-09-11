@@ -10,7 +10,8 @@ import {
   FaUser, 
   FaPaperPlane,
   FaCog,
-  FaHistory
+  FaHistory,
+  FaRegEdit
 } from "react-icons/fa";
 
 interface ChatMessage {
@@ -34,7 +35,7 @@ export default function AIAnalysisPage() {
     {
       id: 1,
       role: 'model',
-      content: "Hi! I’m your AI finance assistant. Ask anything about spending, savings, budgeting, or investments.",
+      content: "Hi! I'm your AI finance assistant. Ask anything about spending, savings, budgeting, or investments.",
       timestamp: new Date()
     }
   ]);
@@ -51,17 +52,26 @@ export default function AIAnalysisPage() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [sessions, setSessions] = useState<{ id: string; title: string; created_at: string }[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fetchSessions = async () => {
+    try {
+      const res = await fetch('/api/ai/history');
+      if (res.ok) {
+        const data = await res.json();
+        setSessions(data.sessions || []);
+      }
+    } catch {}
+  };
 
   // Simple suggestion chips
   const suggestions = [
     "Summarize my spending this month",
-    "What’s my savings rate?",
+    "What's my savings rate?",
     "Create a simple 50/30/20 budget",
     "How can I save more next month?",
   ];
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
   // Load saved preferences on mount
@@ -197,7 +207,8 @@ export default function AIAnalysisPage() {
 
   return (
     <div className="flex min-h-screen bg-background text-foreground pt-6 px-4">
-      <div className="flex flex-col items-start justify-start w-full h-full gap-6 max-w-3xl mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full max-w-6xl mx-auto">
+        <div className="lg:col-span-2 flex flex-col gap-6">
         {/* Header */}
         <div className="flex flex-row items-center justify-between w-full">
           <div className="flex items-center gap-3">
@@ -210,6 +221,24 @@ export default function AIAnalysisPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={() => {
+                setSessionId(null);
+                setInputMessage("");
+                setMessages([
+                  {
+                    id: 1,
+                    role: 'model',
+                    content: "Hi! I'm your AI finance assistant. Ask anything about spending, savings, budgeting, or investments.",
+                    timestamp: new Date()
+                  }
+                ]);
+              }}
+            >
+              <FaRegEdit className="w-4 h-4" /> 
+            </Button>
             <Button variant="secondary" size="icon" onClick={() => setHistoryOpen(true)}>
               <FaHistory className="w-4 h-4" />
             </Button>
@@ -389,24 +418,12 @@ export default function AIAnalysisPage() {
           </div>
         </Card>
         {/* History Dialog */}
-        <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <Dialog open={historyOpen} onOpenChange={(o) => { setHistoryOpen(o); if (o) fetchSessions(); }}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Chat History</DialogTitle>
             </DialogHeader>
             <div className="space-y-2 max-h-[50vh] overflow-y-auto">
-              <Button
-                variant="secondary"
-                onClick={async () => {
-                  const res = await fetch('/api/ai/history');
-                  if (res.ok) {
-                    const data = await res.json();
-                    setSessions(data.sessions || []);
-                  }
-                }}
-              >
-                Refresh
-              </Button>
               <ul className="space-y-1">
                 {sessions.map((s) => (
                   <li key={s.id}>
@@ -436,6 +453,22 @@ export default function AIAnalysisPage() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
+        {/* Coaching suggestions (right side) */}
+        <div className="flex flex-col gap-4">
+          <Card className="border-0 shadow-sm bg-white/5 backdrop-blur-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-white text-base">Coaching suggestions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-gray-200">
+              <button onClick={() => setInputMessage("You are my personal finance coach. My monthly income is RM[amount]. Please create a budget that lets me cover bills, save money, and still have room to enjoy life. Do not tell me to give up happiness.")} className="block text-left w-full p-2 rounded bg-white/10 hover:bg-white/20">Budget that saves but still allows joy</button>
+              <button onClick={() => setInputMessage("These are my spending categories: [enter your expenses]. Please label each as 'necessary', 'optional', or 'cuttable', and suggest at least one change that saves RM100.")} className="block text-left w-full p-2 rounded bg-white/10 hover:bg-white/20">Classify expenses + save RM100</button>
+              <button onClick={() => setInputMessage("I want to save RM[goal amount] in [X months]. Based on my income, create a weekly savings plan I can actually execute. If a week is missed, tell me how to catch up.")} className="block text-left w-full p-2 rounded bg-white/10 hover:bg-white/20">Weekly plan to reach savings goal</button>
+              <button onClick={() => setInputMessage("Outline my typical monthly income and fixed expenses, highlight which weeks might be tight, and give 1-2 adjustment suggestions. No table—just help me understand where my money goes.")} className="block text-left w-full p-2 rounded bg-white/10 hover:bg-white/20">Monthly inflow/outflow overview</button>
+              <button onClick={() => setInputMessage("Here are 5 purchases I regret: [fill in]. Analyze why I bought them at the time, why I regret them, what I can learn, and suggest alternatives to avoid impulse buys next time.")} className="block text-left w-full p-2 rounded bg-white/10 hover:bg-white/20">Analyze 5 regretted purchases</button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
