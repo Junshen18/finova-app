@@ -14,18 +14,23 @@ export default async function Page({
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl">
-                Sorry, something went wrong.
+                {params?.error === "account_locked" ? "Account locked" : "Sorry, something went wrong."}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {params?.error ? (
-                <p className="text-sm text-muted-foreground">
-                  Code error: {params.error}
-                </p>
+              {params?.error === "account_locked" ? (
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    Your account is currently locked. To request an unlock, please email our support team.
+                  </p>
+                  <p className="text-sm">
+                    <a href="mailto:support@finova.app" className="underline underline-offset-4">support@finova.app</a>
+                  </p>
+                </div>
+              ) : params?.error ? (
+                <p className="text-sm text-muted-foreground">Code error: {params.error}</p>
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  An unspecified error occurred.
-                </p>
+                <p className="text-sm text-muted-foreground">An unspecified error occurred.</p>
               )}
             </CardContent>
           </Card>

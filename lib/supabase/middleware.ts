@@ -79,6 +79,55 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
+  // Role-based routing: admins should stay under /protected/admin
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, is_locked")
+      .eq("user_id", user.id)
+      .single();
+
+    const role = (profile?.role || "").toLowerCase();
+    const path = request.nextUrl.pathname;
+    const isAdminArea = path.startsWith("/protected/admin");
+    const isProtectedArea = path.startsWith("/protected");
+
+    // If locked, block app access except when already on an auth page
+    if (profile?.is_locked) {
+      const isAuthPage = path.startsWith("/auth");
+      if (!isAuthPage) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/auth/error";
+        url.searchParams.set("error", "account_locked");
+        return NextResponse.redirect(url);
+      }
+      return supabaseResponse;
+    }
+
+    if (role === "admin") {
+      // If admin tries to access user-only sections, redirect to admin dashboard
+      const userOnlyPrefixes = [
+        "/protected/transactions",
+        "/protected/accounts",
+        "/protected/ai-analysis",
+        "/protected/friends",
+        "/protected/games",
+        "/protected/groups",
+        "/protected/leaderboard",
+        "/protected/profile",
+        "/protected/subscription",
+        "/protected/add",
+        "/protected/dashboard",
+        "/protected/page",
+      ];
+      if (!isAdminArea && userOnlyPrefixes.some((p) => path.startsWith(p))) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/protected/admin";
+        return NextResponse.redirect(url);
+      }
+    }
+  }
+
   // IMPORTANT: You *must* return the supabaseResponse object as it is.
   // If you're creating a new response object with NextResponse.next() make sure to:
   // 1. Pass the request in it, like so:
