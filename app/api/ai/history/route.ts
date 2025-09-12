@@ -85,4 +85,59 @@ export async function POST(req: Request) {
   }
 }
 
+export async function DELETE(req: Request) {
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const sessionId = searchParams.get("session_id");
+
+    if (sessionId) {
+      // Delete turns then session
+      const { error: delTurnsErr } = await supabase
+        .from("ai_chat_turns")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("session_id", sessionId);
+      if (delTurnsErr) return NextResponse.json({ error: delTurnsErr.message }, { status: 500 });
+
+      const { error: delSessErr } = await supabase
+        .from("ai_chat_sessions")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("id", sessionId);
+      if (delSessErr) return NextResponse.json({ error: delSessErr.message }, { status: 500 });
+      return NextResponse.json({ ok: true });
+    }
+
+    // Clear all sessions for this user
+    const { data: sess, error: fetchErr } = await supabase
+      .from("ai_chat_sessions")
+      .select("id")
+      .eq("user_id", user.id);
+    if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+    const ids = (sess || []).map((s: any) => s.id);
+    if (ids.length > 0) {
+      const { error: delAllTurnsErr } = await supabase
+        .from("ai_chat_turns")
+        .delete()
+        .eq("user_id", user.id)
+        .in("session_id", ids);
+      if (delAllTurnsErr) return NextResponse.json({ error: delAllTurnsErr.message }, { status: 500 });
+      const { error: delAllSessErr } = await supabase
+        .from("ai_chat_sessions")
+        .delete()
+        .eq("user_id", user.id);
+      if (delAllSessErr) return NextResponse.json({ error: delAllSessErr.message }, { status: 500 });
+    }
+    return NextResponse.json({ ok: true });
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message || "Failed to delete" }, { status: 500 });
+  }
+}
+
 

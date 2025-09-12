@@ -13,6 +13,7 @@ import {
   FaHistory,
   FaRegEdit
 } from "react-icons/fa";
+import { createClient } from "@/lib/supabase/client";
 
 interface ChatMessage {
   id: number;
@@ -52,12 +53,34 @@ export default function AIAnalysisPage() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [sessions, setSessions] = useState<{ id: string; title: string; created_at: string }[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [totalIncomeAll, setTotalIncomeAll] = useState<number>(0);
+  const [totalExpenseAll, setTotalExpenseAll] = useState<number>(0);
+  const [monthIncomeTotal, setMonthIncomeTotal] = useState<number>(0);
+  const [monthExpenses, setMonthExpenses] = useState<{ id: number; date: string; amount: number; description: string | null }[]>([]);
   const fetchSessions = async () => {
     try {
-      const res = await fetch('/api/ai/history');
+      const res = await fetch('/api/ai/history', { credentials: 'include' as RequestCredentials });
       if (res.ok) {
         const data = await res.json();
         setSessions(data.sessions || []);
+      }
+    } catch {}
+  };
+
+  const fetchTurns = async (sid: string) => {
+    try {
+      const r = await fetch(`/api/ai/history?session_id=${sid}`, { credentials: 'include' as RequestCredentials });
+      if (r.ok) {
+        const d = await r.json();
+        const turns = (d.turns || []) as { prompt: string; response: string; created_at: string }[];
+        const rebuilt: ChatMessage[] = [];
+        turns.forEach((t, idx) => {
+          rebuilt.push({ id: idx * 2 + 1, role: 'user', content: t.prompt, timestamp: new Date(t.created_at) });
+          rebuilt.push({ id: idx * 2 + 2, role: 'model', content: t.response, timestamp: new Date(t.created_at) });
+        });
+        if (rebuilt.length > 0) setMessages(rebuilt);
+        setSessionId(sid);
       }
     } catch {}
   };
@@ -95,13 +118,64 @@ export default function AIAnalysisPage() {
     })();
   }, []);
 
-  const sendMessage = async (text: string) => {
+  // Load financial context on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const supabase = createClient();
+        const { data: auth } = await supabase.auth.getUser();
+        const uid = auth?.user?.id || null;
+        setUserId(uid);
+        if (!uid) return;
+
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+        const [incAllRes, expAllRes, incMonthRes, expMonthRes] = await Promise.all([
+          supabase.from("income_transactions").select("amount").eq("user_id", uid),
+          supabase.from("expense_transactions").select("amount").eq("user_id", uid),
+          supabase.from("income_transactions").select("amount").eq("user_id", uid).gte("date", startOfMonth),
+          supabase
+            .from("expense_transactions")
+            .select("id, date, amount, description")
+            .eq("user_id", uid)
+            .gte("date", startOfMonth)
+            .order("date", { ascending: false })
+        ]);
+
+        const sum = (rows: any[] | null | undefined) => (rows || []).reduce((a, r) => a + Number(r.amount || 0), 0);
+        setTotalIncomeAll(sum((incAllRes.data as any[]) || []));
+        setTotalExpenseAll(sum((expAllRes.data as any[]) || []));
+        setMonthIncomeTotal(sum((incMonthRes.data as any[]) || []));
+        setMonthExpenses(((expMonthRes.data as any[]) || []).map((e) => ({ id: e.id, date: e.date, amount: Number(e.amount || 0), description: e.description ?? null })));
+      } catch (_) {}
+    })();
+  }, []);
+
+  // Initial load: fetch sessions and auto-load latest session turns (if any)
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/ai/history', { credentials: 'include' as RequestCredentials });
+        if (res.ok) {
+          const data = await res.json();
+          const sess = (data.sessions || []) as { id: string }[];
+          setSessions(sess as any);
+          if (sess.length > 0) {
+            await fetchTurns(sess[0].id);
+          }
+        }
+      } catch {}
+    })();
+  }, []);
+
+  const sendMessage = async (text: string, displayText?: string) => {
     if (!text.trim()) return;
 
     const userMessage: ChatMessage = {
       id: messages.length + 1,
       role: 'user',
-      content: text,
+      content: displayText ?? text,
       timestamp: new Date()
     };
 
@@ -172,11 +246,12 @@ export default function AIAnalysisPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             sessionId,
-            prompt: text,
+            prompt: (displayText ?? text),
             response: accumulated,
             preferences,
             timeRange: preferences.timeRange,
-          })
+          }),
+          credentials: 'include' as RequestCredentials,
         });
         if (save.ok) {
           const data = await save.json();
@@ -196,7 +271,44 @@ export default function AIAnalysisPage() {
     }
   };
 
-  const handleSendMessage = () => sendMessage(inputMessage);
+  // Send typed input with hidden context
+  const handleSendMessage = () => {
+    const text = inputMessage;
+    if (!text.trim()) return;
+    const currency = (n: number) => `RM${n.toFixed(2)}`;
+    const lines: string[] = [];
+    lines.push(`Total income (all time): ${currency(totalIncomeAll)}`);
+    lines.push(`Total expense (all time): ${currency(totalExpenseAll)}`);
+    lines.push(`This month income: ${currency(monthIncomeTotal)}`);
+    const txLines = monthExpenses.slice(0, 100).map((e) => `${new Date(e.date).toLocaleDateString()}: ${currency(Number(e.amount || 0))}${e.description ? ` • ${e.description}` : ""}`);
+    lines.push(`This month expenses (${monthExpenses.length}):`);
+    if (txLines.length) lines.push(...txLines);
+    const contextBlock = `\n\nContext (auto-provided):\n${lines.join("\n")}`;
+    const combined = `${text}${contextBlock}`;
+    return sendMessage(combined, text);
+  };
+
+  // Autofill and auto-send suggestion with context
+  const handleSuggestionClick = async (template: string) => {
+    // Fill known placeholders, leave goal/fill-in ones untouched
+    const currency = (n: number) => `RM${n.toFixed(2)}`;
+    let filled = template;
+    // Replace [amount] with this month's income total if present
+    if (filled.includes("[amount]")) {
+      filled = filled.replace("[amount]", monthIncomeTotal > 0 ? monthIncomeTotal.toFixed(2) : "0.00");
+    }
+    // Build context block
+    const lines: string[] = [];
+    lines.push(`Total income (all time): ${currency(totalIncomeAll)}`);
+    lines.push(`Total expense (all time): ${currency(totalExpenseAll)}`);
+    lines.push(`This month income: ${currency(monthIncomeTotal)}`);
+    const txLines = monthExpenses.slice(0, 100).map((e) => `${new Date(e.date).toLocaleDateString()}: ${currency(Number(e.amount || 0))}${e.description ? ` • ${e.description}` : ""}`);
+    lines.push(`This month expenses (${monthExpenses.length}):`);
+    if (txLines.length) lines.push(...txLines);
+    const contextBlock = `\n\nContext (auto-provided):\n${lines.join("\n")}`;
+    const combined = `${filled}${contextBlock}`;
+    await sendMessage(combined, filled);
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -408,7 +520,7 @@ export default function AIAnalysisPage() {
               {suggestions.map((s, i) => (
                 <button
                   key={i}
-                  onClick={() => sendMessage(s)}
+                  onClick={() => handleSuggestionClick(s)}
                   className="text-xs md:text-sm px-3 py-2 rounded-full bg-white/10 hover:bg-white/20 text-gray-200 hover:text-white transition"
                 >
                   {s}
@@ -423,30 +535,71 @@ export default function AIAnalysisPage() {
             <DialogHeader>
               <DialogTitle>Chat History</DialogTitle>
             </DialogHeader>
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm text-gray-300">{sessions.length} session{sessions.length===1?'':'s'}</div>
+              {sessions.length > 0 && (
+                <button
+                  className="text-xs px-2 py-1 rounded bg-white/10 hover:bg-white/20"
+                  onClick={async () => {
+                    if (!confirm('Delete all chat sessions? This cannot be undone.')) return;
+                    const res = await fetch('/api/ai/history', { method: 'DELETE', credentials: 'include' as RequestCredentials });
+                    if (res.ok) {
+                      setSessions([]);
+                      setMessages([
+                        {
+                          id: 1,
+                          role: 'model',
+                          content: "Hi! I'm your AI finance assistant. Ask anything about spending, savings, budgeting, or investments.",
+                          timestamp: new Date()
+                        }
+                      ]);
+                      setSessionId(null);
+                      toast.success('All sessions deleted');
+                    } else {
+                      const d = await res.json().catch(()=>({}));
+                      toast.error(d?.error || 'Failed to delete');
+                    }
+                  }}
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
             <div className="space-y-2 max-h-[50vh] overflow-y-auto">
               <ul className="space-y-1">
                 {sessions.map((s) => (
                   <li key={s.id}>
-                    <button
-                      className="w-full text-left p-2 rounded bg-white/10 hover:bg-white/20"
-                      onClick={async () => {
-                        const r = await fetch(`/api/ai/history?session_id=${s.id}`);
-                        if (r.ok) {
-                          const d = await r.json();
-                          const turns = (d.turns || []) as { prompt: string; response: string; created_at: string }[];
-                          const rebuilt: ChatMessage[] = [];
-                          turns.forEach((t, idx) => {
-                            rebuilt.push({ id: idx * 2 + 1, role: 'user', content: t.prompt, timestamp: new Date(t.created_at) });
-                            rebuilt.push({ id: idx * 2 + 2, role: 'model', content: t.response, timestamp: new Date(t.created_at) });
-                          });
-                          setMessages(rebuilt.length ? rebuilt : messages);
-                          setSessionId(s.id);
+                    <div className="flex items-center gap-2">
+                      <button
+                        className="flex-1 text-left p-2 rounded bg-white/10 hover:bg-white/20"
+                        onClick={async () => {
+                          await fetchTurns(s.id);
                           setHistoryOpen(false);
-                        }
-                      }}
-                    >
-                      {s.title}
-                    </button>
+                        }}
+                      >
+                        {s.title}
+                      </button>
+                      <button
+                        className="text-xs px-2 py-1 rounded bg-white/10 hover:bg-white/20"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (!confirm('Delete this session?')) return;
+                          const res = await fetch(`/api/ai/history?session_id=${s.id}`, { method: 'DELETE', credentials: 'include' as RequestCredentials });
+                          if (res.ok) {
+                            setSessions(prev => prev.filter(x => x.id !== s.id));
+                            if (sessionId === s.id) {
+                              setSessionId(null);
+                            }
+                            toast.success('Session deleted');
+                          } else {
+                            const d = await res.json().catch(()=>({}));
+                            toast.error(d?.error || 'Failed to delete');
+                          }
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
