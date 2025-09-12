@@ -67,6 +67,17 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
     group_id: "",
   });
 
+  // split bill: groups and members
+  const [groups, setGroups] = useState<{ id: string; name: string }[]>([]);
+  const [groupModalOpen, setGroupModalOpen] = useState(false);
+  const [selectedGroupId, setSelectedGroupId] = useState<string>("");
+  const [selectedGroupName, setSelectedGroupName] = useState<string>("");
+  const [groupMembers, setGroupMembers] = useState<{ user_id: string; display_name: string }[]>([]);
+
+  // split method state
+  const [splitMethod, setSplitMethod] = useState<"equal" | "percentage" | "custom">("equal");
+  const [memberSplits, setMemberSplits] = useState<Record<string, number>>({});
+
   useEffect(() => {
     async function fetchUser() {
       const supabase = createClient();
@@ -142,6 +153,46 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
     }
   }
 
+  async function fetchGroups(userId: string) {
+    const supabase = createClient();
+    // get groups the user is a member of
+    const { data: memRows } = await supabase
+      .from("split_group_member")
+      .select("group_id")
+      .eq("user_id", userId);
+    const groupIds = Array.from(new Set((memRows || []).map((r: any) => r.group_id)));
+    if (groupIds.length === 0) {
+      setGroups([]);
+      return;
+    }
+    const { data: groupRows } = await supabase
+      .from("split_groups")
+      .select("id, name")
+      .in("id", groupIds);
+    setGroups((groupRows || []).map((g: any) => ({ id: String(g.id), name: g.name })));
+  }
+
+  async function fetchGroupMembers(groupId: number) {
+    const supabase = createClient();
+    const { data: memRows } = await supabase
+      .from("split_group_member")
+      .select("user_id")
+      .eq("group_id", groupId);
+    const memberIds: string[] = (memRows || []).map((r: any) => r.user_id);
+    if (memberIds.length === 0) {
+      setGroupMembers([]);
+      return;
+    }
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("user_id, display_name")
+      .in("user_id", memberIds);
+    const map: Record<string, string> = Object.fromEntries(
+      (profiles || []).map((p: any) => [p.user_id, p.display_name || "Member"])
+    );
+    setGroupMembers(memberIds.map((id) => ({ user_id: id, display_name: map[id] || "Member" })));
+  }
+
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -155,6 +206,24 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
       [name]: type === "checkbox" ? checked : value,
     }));
   };
+
+  // Load groups when split bill toggled on; clear split state when off
+  useEffect(() => {
+    (async () => {
+      if (form.is_split_bill && form.user_id) {
+        if (groups.length === 0) {
+          await fetchGroups(form.user_id);
+        }
+      } else {
+        setSelectedGroupId("");
+        setSelectedGroupName("");
+        setGroupMembers([]);
+        setSplitMethod("equal");
+        setMemberSplits({});
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.is_split_bill, form.user_id]);
 
   const handleScanReceiptClick = () => {
     setCameraModalOpen(true);
@@ -406,6 +475,43 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
       const data = await res.json();
 
       if (res.ok) {
+        // If split bill, create expense_splits mirroring group add bill flow
+        if (form.is_split_bill && selectedGroupId && groupMembers.length > 0) {
+          try {
+            const expenseId = data?.data?.id;
+            const totalAmount = parseFloat(form.amount || "0");
+            if (expenseId && totalAmount > 0) {
+              const memberIds = groupMembers.map((m) => m.user_id);
+              let rows: { user_id: string; amount: number }[] = [];
+              if (splitMethod === "equal") {
+                const base = Math.floor((totalAmount / memberIds.length) * 100) / 100;
+                rows = memberIds.map((id) => ({ user_id: id, amount: base }));
+                const sum = rows.reduce((a, r) => a + r.amount, 0);
+                rows[rows.length - 1].amount = Math.round((rows[rows.length - 1].amount + (totalAmount - sum)) * 100) / 100;
+              } else if (splitMethod === "percentage") {
+                rows = memberIds.map((id) => {
+                  const pct = Number(memberSplits[id] || 0);
+                  return { user_id: id, amount: Math.round((totalAmount * (pct / 100)) * 100) / 100 };
+                });
+                const sum = rows.reduce((a, r) => a + r.amount, 0);
+                rows[rows.length - 1].amount = Math.round((rows[rows.length - 1].amount + (totalAmount - sum)) * 100) / 100;
+              } else {
+                rows = memberIds.map((id) => ({ user_id: id, amount: Math.round(Number(memberSplits[id] || 0) * 100) / 100 }));
+                const total = Math.round(rows.reduce((a, r) => a + r.amount, 0) * 100) / 100;
+                if (Math.abs(total - totalAmount) > 0.01) {
+                  throw new Error("Splits must sum to total amount");
+                }
+              }
+              const supabase = createClient();
+              const splitRows = rows.map((r) => ({ expense_id: expenseId, user_id: r.user_id, amount: r.amount }));
+              const { error: splitErr } = await supabase.from("expense_splits").insert(splitRows);
+              if (splitErr) throw splitErr;
+            }
+          } catch (err) {
+            console.error(err);
+            toast.error("Failed to create splits");
+          }
+        }
         onCancel?.();
         toast.success("Expense added successfully");
         setFile(null);
@@ -423,6 +529,11 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
           is_split_bill: false,
           group_id: "",
         });
+        setSelectedGroupId("");
+        setSelectedGroupName("");
+        setGroupMembers([]);
+        setSplitMethod("equal");
+        setMemberSplits({});
         setReceiptImage(null);
       } else {
         toast.error("Failed to save expense.");
@@ -587,17 +698,109 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
                 </label>
               </div>
 
-              {/* Group ID */}
+              {/* Split bill details */}
               {form.is_split_bill && (
-                <div className="md:col-span-2">
-                  <Input
-                    name="group_id"
-                    type="number"
-                    placeholder="Group ID"
-                    value={form.group_id}
-                    onChange={handleChange}
-                    className="w-full bg-form-bg text-foreground border-form-border placeholder:text-muted-foreground"
-                  />
+                <div className="md:col-span-2 space-y-3">
+                  {/* Group selection */}
+                  <Button
+                    type="button"
+                    className="w-full bg-form-bg text-foreground border-form-border border justify-start px-3 py-2 hover:bg-form-hover"
+                    onClick={() => setGroupModalOpen(true)}
+                  >
+                    {selectedGroupName || "Select Group"}
+                  </Button>
+                  {/* Split method */}
+                  {selectedGroupId && (
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-3 gap-2">
+                        {(["equal","percentage","custom"] as const).map((m) => (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => setSplitMethod(m)}
+                            className={`px-3 py-2 rounded-md border ${splitMethod===m?"bg-white/10 border-white/30":"border-white/10 hover:bg-white/5"}`}
+                          >
+                            {m.charAt(0).toUpperCase()+m.slice(1)}
+                          </button>
+                        ))}
+                      </div>
+                      {/* Member inputs */}
+                      {splitMethod !== "equal" && (
+                        <div className="space-y-2">
+                          {groupMembers.map((m) => (
+                            <div key={m.user_id} className="flex items-center justify-between gap-3">
+                              <span className="text-sm">{m.display_name}</span>
+                              {splitMethod === "percentage" ? (
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  max={100}
+                                  step="0.01"
+                                  value={memberSplits[m.user_id] ?? 0}
+                                  onChange={(e) => setMemberSplits((p) => ({ ...p, [m.user_id]: Number(e.target.value) }))}
+                                  className="w-28 bg-form-bg text-foreground border-form-border"
+                                  placeholder="%"
+                                />
+                              ) : (
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  step="0.01"
+                                  value={memberSplits[m.user_id] ?? 0}
+                                  onChange={(e) => setMemberSplits((p) => ({ ...p, [m.user_id]: Number(e.target.value) }))}
+                                  className="w-28 bg-form-bg text-foreground border-form-border"
+                                  placeholder="$"
+                                />
+                              )}
+                            </div>
+                          ))}
+                          {splitMethod === "percentage" && (
+                            <p className="text-xs text-muted-foreground">Ensure total equals 100%.</p>
+                          )}
+                        </div>
+                      )}
+                      {/* Summary */}
+                      <div className="rounded-md bg-white/5 border border-white/10 p-3 text-sm">
+                        <p className="font-medium mb-2">Split summary</p>
+                        <ul className="space-y-1">
+                          {(() => {
+                            const amt = parseFloat(form.amount || "0");
+                            const ids = groupMembers.map((m) => m.user_id);
+                            const calc = () => {
+                              if (!amt || ids.length === 0) return [] as { id: string; amount: number }[];
+                              if (splitMethod === "equal") {
+                                const base = Math.floor((amt / ids.length) * 100) / 100;
+                                const rows = ids.map((id) => ({ id, amount: base }));
+                                const sum = rows.reduce((a, r) => a + r.amount, 0);
+                                rows[rows.length - 1].amount = Math.round((rows[rows.length - 1].amount + (amt - sum)) * 100) / 100;
+                                return rows;
+                              }
+                              if (splitMethod === "percentage") {
+                                const rows = ids.map((id) => {
+                                  const pct = Number(memberSplits[id] || 0);
+                                  return { id, amount: Math.round((amt * (pct / 100)) * 100) / 100 };
+                                });
+                                const sum = rows.reduce((a, r) => a + r.amount, 0);
+                                rows[rows.length - 1].amount = Math.round((rows[rows.length - 1].amount + (amt - sum)) * 100) / 100;
+                                return rows;
+                              }
+                              return ids.map((id) => ({ id, amount: Math.round(Number(memberSplits[id] || 0) * 100) / 100 }));
+                            };
+                            const rows = calc();
+                            return rows.map((r) => {
+                              const m = groupMembers.find((x) => x.user_id === r.id);
+                              return (
+                                <li key={r.id} className="flex justify-between">
+                                  <span className="text-muted-foreground">{m?.display_name || "Member"}</span>
+                                  <span>${r.amount.toFixed(2)}</span>
+                                </li>
+                              );
+                            });
+                          })()}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -691,6 +894,22 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
           });
         }}
         title="Select an Account"
+      />
+
+      {/* Group Modal */}
+      <SelectionModal
+        open={groupModalOpen}
+        onOpenChange={setGroupModalOpen}
+        options={groups}
+        selected={selectedGroupId}
+        onSelect={async (id: string) => {
+          const selected = groups.find((g) => g.id === id);
+          setSelectedGroupId(id);
+          setSelectedGroupName(selected?.name || "");
+          setForm({ ...form, group_id: id });
+          await fetchGroupMembers(parseInt(id));
+        }}
+        title="Select a Group"
       />
 
       {/* OCR Review Dialog */}
