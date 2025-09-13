@@ -32,8 +32,23 @@ export default function MainHeader({ profile }: MainHeaderProps) {
         if (!user) return;
         const { data, error } = await supabase.rpc("get_received_friend_requests");
         if (!error) setPendingCount((data || []).length || 0);
-        const { data: streakData } = await supabase.rpc("get_user_current_streak");
-        if (typeof streakData === "number") setStreak(streakData || 0);
+        // Prefer user_streaks if available
+        try {
+          const { data: sRows, error: sErr } = await supabase
+            .from("user_streaks")
+            .select("current_streak")
+            .eq("user_id", user.id)
+            .single();
+          if (!sErr && sRows && typeof sRows.current_streak === "number") {
+            setStreak(sRows.current_streak || 0);
+          } else {
+            const { data: streakData } = await supabase.rpc("get_user_current_streak");
+            if (typeof streakData === "number") setStreak(streakData || 0);
+          }
+        } catch (_) {
+          const { data: streakData } = await supabase.rpc("get_user_current_streak");
+          if (typeof streakData === "number") setStreak(streakData || 0);
+        }
       } catch {
         // ignore silently in header
       }
