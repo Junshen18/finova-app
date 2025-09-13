@@ -503,11 +503,11 @@ export default function GroupDetailPage() {
       if (memberIds2.length > 0) {
         const { data: profilesRows2, error: profilesError2 } = await supabase
           .from("profiles")
-          .select("id, display_name, avatar_url")
-          .in("id", memberIds2);
+          .select("user_id, display_name, avatar_url")
+          .in("user_id", memberIds2);
         console.log("[GroupDetail] profiles rows (after add)", profilesRows2, "error", profilesError2);
         profilesMap2 = Object.fromEntries(
-          (profilesRows2 || []).map((p: any) => [p.id, { display_name: p.display_name || "Member", avatar_url: p.avatar_url || null }])
+          (profilesRows2 || []).map((p: any) => [p.user_id, { display_name: p.display_name || "Member", avatar_url: p.avatar_url || null }])
         );
       }
       const normalized2: Member[] = memberIds2.map((uid) => ({
