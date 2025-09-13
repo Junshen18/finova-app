@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import * as XLSX from "xlsx";
 import { FaArrowUp, FaArrowDown, FaExchangeAlt, FaFilter, FaSearch, FaWallet, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { createClient } from "@/lib/supabase/client";
 import TransactionDetailsDialog, { TransactionRef } from "@/components/transaction-details-dialog";
@@ -297,13 +298,13 @@ export default function TransactionsPage() {
   const getTransactionColor = (type: string) => {
     switch (type) {
       case "income":
-        return "bg-emerald-500 text-white";
+        return "bg-emerald-500 text-foreground";
       case "expense":
-        return "bg-red-500 text-white";
+        return "bg-red-500 text-foreground";
       case "transfer":
-        return "bg-blue-500 text-white";
+        return "bg-blue-500 text-foreground";
       default:
-        return "bg-gray-500 text-white";
+        return "bg-gray-500 text-foreground";
     }
   };
 
@@ -318,6 +319,64 @@ export default function TransactionsPage() {
   const totalIncome = useMemo(() => monthTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0), [monthTransactions]);
   const totalExpenses = useMemo(() => monthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + (t.amount || 0), 0), [monthTransactions]);
   const totalBalance = useMemo(() => totalIncome - totalExpenses, [totalIncome, totalExpenses]);
+
+  // Export currently filtered transactions to CSV
+  const serializeRows = () => {
+    return filteredTransactions.map((t) => {
+      const dateKey = getLocalDateKeyFromString(t.date);
+      const signedAmount = t.type === 'expense' ? -Math.abs(Number(t.amount || 0)) : Number(t.amount || 0);
+      return {
+        Date: dateKey,
+        Type: t.type,
+        Title: t.title || '',
+        Category: t.category || '',
+        Amount: Number(signedAmount.toFixed(2)),
+        Description: t.description || '',
+        Status: t.status || '',
+      };
+    });
+  };
+
+  const handleExportCsv = () => {
+    try {
+      const rows = serializeRows();
+
+      const headers = ["Date","Type","Title","Category","Amount","Description","Status"];
+      const escape = (value: string) => {
+        const needsQuotes = /[",\n]/.test(value);
+        const safe = value.replace(/"/g, '""');
+        return needsQuotes ? `"${safe}"` : safe;
+      };
+      const csv = [headers.join(',')]
+        .concat(rows.map((r) => headers.map((h) => escape(String((r as any)[h] ?? ''))).join(',')))
+        .join('\n');
+
+      const bom = '\uFEFF';
+      const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const y = selectedMonth.getFullYear();
+      const m = String(selectedMonth.getMonth() + 1).padStart(2, '0');
+      a.href = url;
+      a.download = `finova-transactions-${y}-${m}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (_) { /* noop */ }
+  };
+
+  const handleExportXlsx = () => {
+    try {
+      const rows = serializeRows();
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Transactions");
+      const y = selectedMonth.getFullYear();
+      const m = String(selectedMonth.getMonth() + 1).padStart(2, '0');
+      XLSX.writeFile(wb, `finova-transactions-${y}-${m}.xlsx`, { bookType: 'xlsx' });
+    } catch (_) { /* noop */ }
+  };
 
   return (
     <div className="flex min-h-screen bg-background text-foreground pt-4 md:pt-10 px-4">
@@ -335,7 +394,7 @@ export default function TransactionsPage() {
               >
                 <FaChevronLeft className="w-4 h-4" />
               </button>
-              <span className="text-sm text-white/90 min-w-[9rem] text-center">
+              <span className="text-sm text-foreground/90 min-w-[9rem] text-center">
                 {selectedMonth.toLocaleString(undefined, { month: 'long', year: 'numeric' })}
               </span>
               <button
@@ -347,10 +406,14 @@ export default function TransactionsPage() {
               </button>
               </div>
           </div>
-          <Button variant="outline" size="sm">
-            <FaFilter className="w-4 h-4 mr-2" />
-            Export
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={filteredTransactions.length === 0}>
+              CSV
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportXlsx} disabled={filteredTransactions.length === 0}>
+              XLSX
+            </Button>
+          </div>
         </div>
 
         {/* Month selector */}
@@ -362,7 +425,7 @@ export default function TransactionsPage() {
           >
             <FaChevronLeft className="w-4 h-4" />
           </button>
-          <span className="text-sm text-white/90 min-w-[9rem] text-center">
+          <span className="text-sm text-foreground/90 min-w-[9rem] text-center">
             {selectedMonth.toLocaleString(undefined, { month: 'long', year: 'numeric' })}
           </span>
           <button
@@ -382,7 +445,7 @@ export default function TransactionsPage() {
                 <div>
                   <p className="hidden md:block text-base text-gray-400">Total Balance</p>
                   <p className="text-[10px] md:hidden text-gray-400">Total (RM)</p>
-                  <p className="text-sm md:text-2xl font-bold text-white">{totalBalance.toFixed(2)}</p>
+                  <p className="text-sm md:text-2xl font-bold text-foreground">{totalBalance.toFixed(2)}</p>
                 </div>
                 <div className="md:block hidden p-2 rounded-full bg-blue-500/20">
                   <FaWallet className="w-5 h-5 text-blue-400" />
@@ -434,7 +497,7 @@ export default function TransactionsPage() {
                   placeholder="Search transactions..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-transparent border-none outline-none text-white placeholder-gray-400 w-full"
+                  className="bg-transparent border-none outline-none text-foreground placeholder-gray-400 w-full"
                 />
               </div>
               <Select value={filterType} onValueChange={(v) => setFilterType(v)}>
@@ -467,7 +530,7 @@ export default function TransactionsPage() {
         <Card className="border-0 shadow-sm bg-white/5 backdrop-blur-sm w-full">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-semibold text-white">
+              <CardTitle className="text-lg font-semibold text-foreground">
                 {loading ? 'Loading...' : `All Transactions (${filteredTransactions.length})`}
               </CardTitle>
               <Badge variant="secondary" className="text-xs">
@@ -570,7 +633,7 @@ export default function TransactionsPage() {
                                   {getTransactionIcon(transaction.type)}
                                 </div>
                                 <div className="flex flex-col">
-                                  <p className="font-medium text-white">{transaction.title}</p>
+                                  <p className="font-medium text-foreground">{transaction.title}</p>
                                   {transaction.category && transaction.category !== transaction.title && (
                                     <p className="text-sm text-gray-300">{transaction.category}</p>
                                   )}
