@@ -1,14 +1,13 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import PlatformModal from "@/components/platform-modal";
 import { FaArrowRight } from "react-icons/fa6";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { motion, animate } from "framer-motion";
-import gsap from "gsap";
-import { Flip } from "gsap/Flip";
+import SplitBillGame from "@/components/split-bill-game";
 
 function AnimatedNumber({ value, duration = 2 }: { value: number; duration?: number }) {
   const [displayValue, setDisplayValue] = useState(0);
@@ -25,215 +24,7 @@ function AnimatedNumber({ value, duration = 2 }: { value: number; duration?: num
   return <span>{displayValue.toLocaleString()}</span>;
 }
 
-function SplitBillGameDemo() {
-  const [participantNames, setParticipantNames] = useState<string[]>(["You", "Alex", "Sam", "Taylor"]);
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [flipCycle, setFlipCycle] = useState(0);
-  const [revealCycle, setRevealCycle] = useState(0);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
-
-  useEffect(() => {
-    gsap.registerPlugin(Flip);
-  }, []);
-
-  const shuffleWithFlip = (iterations = 5, duration = 0.3) => {
-    if (!containerRef.current) return Promise.resolve();
-    const containerEl = containerRef.current;
-    // Pin container height so footer doesn't jump when children go absolute
-    const startHeight = containerEl.offsetHeight;
-    containerEl.style.minHeight = `${startHeight}px`;
-    containerEl.style.position = containerEl.style.position || "relative";
-
-    const doOnce = () => {
-      const state = Flip.getState(containerEl.children);
-      // Shuffle names order
-      setParticipantNames((prev) => {
-        const copy = [...prev];
-        for (let i = copy.length - 1; i > 0; i -= 1) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [copy[i], copy[j]] = [copy[j], copy[i]];
-        }
-        return copy;
-      });
-      return new Promise<void>((resolve) => {
-        // Wait for React to commit DOM updates
-        requestAnimationFrame(() => {
-          Flip.from(state, {
-            duration,
-            ease: "power2.inOut",
-            absolute: true,
-            onComplete: () => resolve(),
-          });
-        });
-      });
-    };
-    // Chain a few shuffles
-    let p = Promise.resolve();
-    for (let i = 0; i < iterations; i += 1) {
-      p = p.then(() => doOnce());
-    }
-    return p.finally(() => {
-      // Release the height pin after all shuffles
-      containerEl.style.minHeight = "";
-    });
-  };
-
-  const handleRandomDraw = () => {
-    if (isDrawing) return;
-    setIsDrawing(true);
-    setSelectedIndex(null);
-    setFlipCycle((c) => c + 1); // trigger single flip for all
-
-    const targetIndex = Math.floor(Math.random() * participantNames.length);
-    // perform smooth shuffles
-    shuffleWithFlip(5, 0.28).then(() => {
-      setSelectedIndex(targetIndex);
-      setRevealCycle((c) => c + 1); // trigger reveal flip for selected
-      setIsDrawing(false);
-    });
-  };
-
-  const handleReset = () => {
-    setSelectedIndex(null);
-    // keep cards as-is; next draw will flip all once again
-    setIsDrawing(false);
-  };
-
-  const Card = ({ name, index }: { name: string; index: number }) => {
-    const isSelected = selectedIndex === index;
-    return (
-      <motion.div
-        key={name}
-        className="relative border-2 rounded-2xl"
-        animate={{
-          scale: isSelected ? 1.05 : 1,
-          boxShadow: isSelected
-            ? "0 0 0 4px rgba(233,254,82,0.35)"
-            : "0 0 0 0px rgba(0,0,0,0)",
-        }}
-        transition={{ type: "spring", stiffness: 260, damping: 22 }}
-      >
-        <div className="[perspective:1000px]">
-          <FlipInner name={name} index={index} flipCycle={flipCycle} revealCycle={revealCycle} revealIndex={selectedIndex} />
-        </div>
-      </motion.div>
-    );
-  };
-
-  const FlipInner = ({
-    name,
-    index,
-    flipCycle,
-    revealCycle,
-    revealIndex,
-  }: {
-    name: string;
-    index: number;
-    flipCycle: number;
-    revealCycle: number;
-    revealIndex: number | null;
-  }) => {
-    // use per-card controlled animation to guarantee single flips
-    const innerRef = useRef<HTMLDivElement | null>(null);
-    const prevFlip = useRef<number>(flipCycle);
-    const prevReveal = useRef<number>(revealCycle);
-
-    useEffect(() => {
-      if (flipCycle !== prevFlip.current) {
-        prevFlip.current = flipCycle;
-        if (innerRef.current) gsap.to(innerRef.current, { rotateY: 180, duration: 0.5, ease: "power2.inOut" });
-      }
-    }, [flipCycle]);
-
-    useEffect(() => {
-      if (revealCycle !== prevReveal.current) {
-        prevReveal.current = revealCycle;
-        if (revealIndex === index && innerRef.current) {
-          gsap.to(innerRef.current, { rotateY: 0, duration: 0.5, ease: "power2.inOut" });
-        }
-      }
-    }, [revealCycle, revealIndex, index]);
-
-    return (
-      <motion.div
-            className="relative h-[120px] sm:h-[150px] md:h-[180px] w-full rounded-2xl"
-            style={{ transformStyle: "preserve-3d" }}
-            initial={false}
-            ref={innerRef}
-          >
-            {/* Front */}
-            <div
-              className="absolute inset-0 backface-hidden rounded-2xl border overflow-hidden"
-              style={{ backfaceVisibility: "hidden" }}
-            >
-              <div className="h-full w-full bg-gradient-to-br from-primary/20 to-primary/5 dark:from-primary/25 dark:to-primary/10">
-                <div className="absolute top-3 left-3 h-4 w-10 rounded bg-primary/30" />
-                <div className="absolute top-3 right-3 h-6 w-6 rounded-full bg-primary/25" />
-                <div className="absolute inset-0 opacity-30 [background:repeating-linear-gradient(135deg,transparent_0px,transparent_6px,rgba(255,255,255,0.06)_6px,rgba(255,255,255,0.06)_10px)]" />
-                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-                  <span className="text-sm sm:text-base font-semibold text-foreground">{name}</span>
-                  <span className="text-[10px] sm:text-xs text-muted-foreground">FINOVA</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Back */}
-            <div
-              className="absolute inset-0 rounded-2xl border overflow-hidden [transform:rotateY(180deg)] backface-hidden"
-              style={{ backfaceVisibility: "hidden" }}
-            >
-              <div className="h-full w-full bg-gradient-to-br from-background to-muted/40">
-                <div className="absolute top-4 left-0 right-0 h-6 bg-foreground/70" />
-                <div className="absolute top-14 right-6 h-6 w-24 rounded bg-muted/70" />
-                <div className="absolute bottom-4 left-4 right-4 text-right text-[10px] sm:text-xs text-muted-foreground">finova.app</div>
-              </div>
-            </div>
-          </motion.div>
-    );
-  };
-
-  return (
-    <div className="max-w-4xl mx-auto">
-      <div ref={containerRef} className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {participantNames.map((name, index) => (
-          <div key={name} ref={(el) => { cardRefs.current[index] = el; }}>
-            <Card name={name} index={index} />
-          </div>
-        ))}
-      </div>
-
-      <div className="flex items-center justify-center gap-3 mt-6">
-        {selectedIndex === null ? (
-          <button
-            onClick={handleRandomDraw}
-            disabled={isDrawing}
-            className="rounded-full bg-primary px-6 py-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer"
-          >
-            {isDrawing ? "Shuffling..." : "Draw a card"}
-          </button>
-        ) : (
-          <button
-            onClick={handleReset}
-            className="rounded-full bg-secondary px-6 py-2 text-secondary-foreground hover:bg-secondary/90 transition-all duration-200 cursor-pointer"
-          >
-            Play again
-          </button>
-        )}
-        <Link href="/auth/login" className="text-sm underline text-muted-foreground hover:text-foreground">
-          Invite friends / Try in groups
-        </Link>
-      </div>
-
-      {selectedIndex !== null && (
-        <div className="mt-3 text-center text-sm text-muted-foreground">
-          Loser pays: <span className="font-medium text-foreground">{participantNames[selectedIndex]}</span>
-        </div>
-      )}
-    </div>
-  );
-}
+// Split Bill Game content moved to components/split-bill-game
 
 export default function Home() {
   const [modalOpen, setModalOpen] = useState(false);
@@ -515,7 +306,7 @@ export default function Home() {
                 Invite your friends or play within your group. Draw a random “card” to decide who pays.
               </p>
             </div>
-            <SplitBillGameDemo />
+            <SplitBillGame participants={["You", "Alex", "Sam", "Taylor"]} />
           </div>
         </section>
 
