@@ -15,6 +15,7 @@ export default function GamesPage() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [membersByGroup, setMembersByGroup] = useState<Record<number, Member[]>>({});
   const [friendOptions, setFriendOptions] = useState<FriendOption[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
 
   const [mode, setMode] = useState<"group" | "manual">("group");
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
@@ -30,6 +31,7 @@ export default function GamesPage() {
         setLoading(false);
         return;
       }
+      setCurrentUserId(userId);
 
       // Load groups user belongs to
       const { data: memberships } = await supabase
@@ -63,7 +65,12 @@ export default function GamesPage() {
       // Load friends for manual selection
       const { data: friends } = await supabase.rpc("get_friends_list");
       const friendOpts: FriendOption[] = (friends || []).map((f: any) => ({ friend_id: f.friend_id, friend_name: f.friend_name }));
-      setFriendOptions(friendOpts);
+      // Ensure the user themself is selectable in manual mode
+      const withSelf: FriendOption[] = [
+        { friend_id: userId, friend_name: "You" },
+        ...friendOpts.filter((f) => f.friend_id !== userId),
+      ];
+      setFriendOptions(withSelf);
 
       setLoading(false);
     })();
