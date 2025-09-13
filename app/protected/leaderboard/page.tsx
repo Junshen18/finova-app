@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import LeaderboardTabs from "@/components/leaderboard-tabs";
 import type { LeaderRow } from "@/components/leaderboard-tabs";
@@ -84,7 +86,14 @@ export default async function LeaderboardPage() {
       <div className="w-full max-w-3xl mx-auto flex flex-col gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Streak Leaderboard</CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Link href="/protected/dashboard" aria-label="Back" className="p-2 rounded-lg hover:bg-white/10 text-muted-foreground">
+                  <ArrowLeftIcon className="h-5 w-5" />
+                </Link>
+                <CardTitle>Streak Leaderboard</CardTitle>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <LeaderboardTabs globalRows={globalLeaderboard} friendRows={friendRows} noFriends={friendRows.length <= 1} />

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { FaCircleUser } from "react-icons/fa6";
+import { FaCircleUser, FaGlobe, FaUserGroup, FaFire, FaMedal } from "react-icons/fa6";
 
 export type LeaderRow = {
   user_id: string;
@@ -36,7 +36,7 @@ export default function LeaderboardTabs({
           }`}
           onClick={() => setActive("global")}
         >
-          Global
+          <span className="inline-flex items-center gap-1"><FaGlobe aria-hidden className="h-4 w-4" /> Global</span>
         </button>
         <button
           type="button"
@@ -45,7 +45,7 @@ export default function LeaderboardTabs({
           }`}
           onClick={() => setActive("friends")}
         >
-          Friends
+          <span className="inline-flex items-center gap-1"><FaUserGroup aria-hidden className="h-4 w-4" /> Friends</span>
         </button>
       </div>
 
@@ -60,10 +60,15 @@ export default function LeaderboardTabs({
           {rows.length === 0 && (
             <div className="text-sm opacity-70 py-6">No activity yet. Add a transaction to start your streak!</div>
           )}
-          {rows.map((row) => (
+          {rows.map((row) => {
+            const medal = row.rank === 1 ? "text-yellow-300" : row.rank === 2 ? "text-slate-300" : row.rank === 3 ? "text-amber-600" : "";
+            return (
             <div key={row.user_id} className="flex items-center justify-between p-3">
               <div className="flex items-center gap-3">
-                <div className="w-8 text-right font-semibold tabular-nums">{row.rank}</div>
+                <div className="w-8 text-right font-semibold tabular-nums flex items-center justify-end gap-1">
+                  {row.rank}
+                  {medal && <FaMedal aria-hidden className={`h-4 w-4 ${medal}`} />}
+                </div>
                 <div className="w-10 h-10 rounded-full overflow-hidden border border-black/10 bg-white/5 flex items-center justify-center">
                   {row.avatar_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -82,11 +87,11 @@ export default function LeaderboardTabs({
                 </div>
               </div>
 
-              <div className="px-3 py-1 rounded-md bg-white/10 border border-black/10 text-sm font-semibold tabular-nums">
-                {row.current_streak} {row.current_streak === 1 ? "day" : "days"}
+              <div className="px-3 py-1 rounded-md bg-white/10 border border-black/10 text-sm font-semibold tabular-nums inline-flex items-center gap-1">
+                <FaFire aria-hidden className="h-4 w-4 text-orange-300" /> {row.current_streak} {row.current_streak === 1 ? "day" : "days"}
               </div>
             </div>
-          ))}
+          )})}
         </div>
       )}
     </div>

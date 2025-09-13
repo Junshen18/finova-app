@@ -73,8 +73,8 @@ export const navItemsMobile = [
   //   icon: "PlusCircleIcon",
   // },
   {
-    label: "Profile",
-    href: "/protected/profile",
-    icon: "UserCircleIcon",
+    label: "Games",
+    href: "/protected/games",
+    icon: "PuzzlePieceIcon",
   },
 ]; 

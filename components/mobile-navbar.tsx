@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { navItemsMobile } from "../data/navItems";
-import { PlusCircleIcon, HomeIcon, DocumentCurrencyDollarIcon, UserCircleIcon, WalletIcon, SparklesIcon, Cog6ToothIcon, PuzzlePieceIcon, UserGroupIcon, ListBulletIcon } from "@heroicons/react/24/outline";
+import { HomeIcon, UserCircleIcon, SparklesIcon, PuzzlePieceIcon, UserGroupIcon, ListBulletIcon } from "@heroicons/react/24/outline";
 import { FaRegFileAlt } from "react-icons/fa";
 
 type MobileItem = { label: string; href: string; icon: string };
@@ -24,8 +24,8 @@ export function MobileNavbar({ onAddTransaction, items }: { onAddTransaction: ()
                 ? ListBulletIcon
                 : item.icon === "FaRegFileAlt"
                 ? (FaRegFileAlt as unknown as React.ComponentType<any>)
-                : item.icon === "UserCircleIcon"
-                ? UserCircleIcon
+                : item.icon === "PuzzlePieceIcon"
+                ? PuzzlePieceIcon
                 : UserCircleIcon;
             return (
               <Link
@@ -54,6 +54,8 @@ export function MobileNavbar({ onAddTransaction, items }: { onAddTransaction: ()
                 ? ListBulletIcon
                 : item.icon === "FaRegFileAlt"
                 ? (FaRegFileAlt as unknown as React.ComponentType<any>)
+                : item.icon === "PuzzlePieceIcon"
+                ? PuzzlePieceIcon
                 : item.icon === "UserCircleIcon"
                 ? UserCircleIcon
                 : UserCircleIcon;
