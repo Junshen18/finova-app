@@ -63,11 +63,11 @@ export function RecentTransactions() {
   }, []);
 
   return (
-    <Card className="border-0 shadow-sm bg-white/5 backdrop-blur-sm h-full">
+    <Card className="border-0 shadow-sm bg-white/5 backdrop-blur-sm h-full text-foreground">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold text-white">Recent Transactions</CardTitle>
-          <Link href="/protected/transactions" className="text-sm text-gray-400 hover:text-white transition-colors">
+          <CardTitle className="text-lg font-semibold text-foreground">Recent Transactions</CardTitle>
+          <Link href="/protected/transactions" className="text-sm text-gray-400 dark:text-gray-400 hover:text-foreground transition-colors">
             View all
           </Link>
         </div>
@@ -99,8 +99,8 @@ export function RecentTransactions() {
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-full ${
                 transaction.type === 'income' 
-                  ? 'bg-emerald-500 text-white shadow-lg' 
-                  : 'bg-red-500 text-white shadow-lg'
+                  ? 'bg-emerald-500 text-foreground shadow-lg' 
+                  : 'bg-red-500 text-foreground shadow-lg'
               }`}>
                 {transaction.type === 'income' ? (
                   <FaArrowDown className="w-4 h-4" />
@@ -109,8 +109,8 @@ export function RecentTransactions() {
                 )}
               </div>
               <div>
-                <p className="font-medium text-white text-[13px] leading-tight">{transaction.title}</p>
-                <p className="text-xs text-gray-300">{transaction.category}</p>
+                <p className="font-medium text-foreground text-[13px] leading-tight">{transaction.title}</p>
+                <p className="text-xs text-gray-400">{transaction.category}</p>
               </div>
             </div>
             <div className="text-right">

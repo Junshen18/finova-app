@@ -44,16 +44,25 @@ export function DesktopSidebar({ profile }: { profile: any }) {
   const itemsToRender = profile?.role === 'admin' ? adminItems : navItems;
 
   return (
-    <aside className="hidden fixed md:flex w-64 bg-black text-white flex-col justify-between px-6 py-8 h-screen">
+    <aside className="hidden fixed md:flex w-64 bg-sidebar text-sidebar-foreground flex-col justify-between px-6 py-8 h-screen border-r">
       <div>
         <div className="flex items-center gap-2 mb-12 px-2">
-          <Image
-            src="/finova-white-logo.svg"
-            alt="Finova"
-            width={150}
-            height={40}
-            className="w-32"
-          />
+          <>
+            <Image
+              src="/finova-logo.svg"
+              alt="Finova"
+              width={150}
+              height={40}
+              className="w-32 block dark:hidden"
+            />
+            <Image
+              src="/finova-white-logo.svg"
+              alt="Finova"
+              width={150}
+              height={40}
+              className="w-32 hidden dark:block"
+            />
+          </>
         </div>
         <nav className="flex flex-col gap-3">
           {itemsToRender.map((item: NavItem) => {
@@ -84,15 +93,15 @@ export function DesktopSidebar({ profile }: { profile: any }) {
                 className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group ${
                   isActive 
                     ? 'bg-[#E9FE52] text-black shadow-lg' 
-                    : 'hover:bg-white/10 text-white'
+                    : 'hover:bg-sidebar-accent/50 text-sidebar-foreground'
                 }`}
               >
                 <IconComp className={`h-5 w-5 ${
-                  isActive ? 'text-black' : 'text-white group-hover:text-[#E9FE52]'
+                  isActive ? 'text-black' : 'text-sidebar-foreground group-hover:text-[#E9FE52]'
                 }`} />
                 <div className="flex items-center flex-1">
                   <span className={`font-medium ${
-                    isActive ? 'text-black' : 'text-white'
+                    isActive ? 'text-black' : 'text-sidebar-foreground'
                   }`}>
                     {item.label}
                   </span>
@@ -116,8 +125,8 @@ export function DesktopSidebar({ profile }: { profile: any }) {
             )}
           </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-white">{profile?.display_name || 'User'}</p>
-              <p className="text-xs text-gray-400">Premium Member</p>
+              <p className="text-sm font-medium text-foreground">{profile?.display_name || 'User'}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-300">Premium Member</p>
             </div>
           </button>
         </DropdownMenuTrigger>

@@ -30,7 +30,7 @@ export function FriendsQuickAction() {
       <Users className="w-5 h-5 mb-1" />
       <span className="text-sm font-medium">Friends</span>
       {pendingCount > 0 && (
-        <span className="absolute -top-1 -right-1 px-1.5 min-w-[16px] h-4 rounded-full bg-red-500 text-[10px] leading-4 text-white font-semibold text-center ring-2 ring-black/20">
+        <span className="absolute -top-1 -right-1 px-1.5 min-w-[16px] h-4 rounded-full bg-red-500 text-[10px] leading-4 text-foreground font-semibold text-center ring-2 ring-black/20">
           {pendingCount > 99 ? '99+' : pendingCount}
         </span>
       )}

@@ -325,7 +325,7 @@ export default function AIAnalysisPage() {
         <div className="flex flex-row items-center justify-between w-full">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-full bg-gradient-to-r from-purple-500 to-blue-500">
-              <FaRobot className="w-6 h-6 text-white" />
+              <FaRobot className="w-6 h-6 text-foreground" />
             </div>
             <div>
               <h1 className="text-xl md:text-2xl font-bold">AI Financial Analysis</h1>
@@ -368,7 +368,7 @@ export default function AIAnalysisPage() {
                   <div className="space-y-2">
                     <label className="text-sm text-gray-300">Default time range</label>
                     <select
-                      className="bg-white/10 border-white/20 text-white rounded p-2 w-full"
+                      className="bg-white/10 border-white/20 text-foreground rounded p-2 w-full"
                       value={preferences.timeRange.preset}
                       onChange={(e) => setPreferences(p => ({ ...p, timeRange: { preset: e.target.value as any } }))}
                     >
@@ -398,7 +398,7 @@ export default function AIAnalysisPage() {
                   <div className="space-y-2">
                     <label className="text-sm text-gray-300">Response verbosity</label>
                     <select
-                      className="bg-white/10 border-white/20 text-white rounded p-2 w-full"
+                      className="bg-white/10 border-white/20 text-foreground rounded p-2 w-full"
                       value={preferences.verbosity}
                       onChange={(e) => setPreferences(p => ({ ...p, verbosity: e.target.value as any }))}
                     >
@@ -446,7 +446,7 @@ export default function AIAnalysisPage() {
         {/* Chat */}
         <Card className="border-0 shadow-sm bg-white/5 backdrop-blur-sm h-[540px] md:h-[640px] flex flex-col w-full">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-semibold text-white flex items-center gap-2">
+            <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
               <FaRobot className="w-5 h-5 text-purple-400" />
               AI Finance Assistant
             </CardTitle>
@@ -459,13 +459,13 @@ export default function AIAnalysisPage() {
               >
                 {message.role === 'model' && (
                   <div className="p-2 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 h-8 w-8 flex items-center justify-center">
-                    <FaRobot className="w-4 h-4 text-white" />
+                    <FaRobot className="w-4 h-4 text-foreground" />
                   </div>
                 )}
                 
                 <div className={`max-w-[75%] p-3 rounded-lg ${
                   message.role === 'user' 
-                    ? 'bg-purple-600 text-white' 
+                    ? 'bg-purple-600 text-foreground' 
                     : 'bg-white/10 text-gray-100'
                 }`}>
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
@@ -476,7 +476,7 @@ export default function AIAnalysisPage() {
                 
                 {message.role === 'user' && (
                   <div className="p-2 rounded-full bg-gray-600 h-8 w-8 flex items-center justify-center">
-                    <FaUser className="w-4 h-4 text-white" />
+                    <FaUser className="w-4 h-4 text-foreground" />
                   </div>
                 )}
               </div>
@@ -485,7 +485,7 @@ export default function AIAnalysisPage() {
             {isTyping && (
               <div className="flex gap-3 justify-start">
                 <div className="p-2 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 h-8 w-8 flex items-center justify-center">
-                  <FaRobot className="w-4 h-4 text-white" />
+                  <FaRobot className="w-4 h-4 text-foreground" />
                 </div>
                 <div className="bg-white/10 text-gray-100 p-3 rounded-lg">
                   <div className="flex space-x-1">
@@ -506,7 +506,7 @@ export default function AIAnalysisPage() {
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask me about your finances..."
-                className="flex-1 bg-white/10 border-white/20 text-white placeholder-gray-400"
+                className="flex-1 bg-white/10 border-white/20 text-foreground placeholder-gray-400"
               />
               <Button 
                 onClick={handleSendMessage}
@@ -521,7 +521,7 @@ export default function AIAnalysisPage() {
                 <button
                   key={i}
                   onClick={() => handleSuggestionClick(s)}
-                  className="text-xs md:text-sm px-3 py-2 rounded-full bg-white/10 hover:bg-white/20 text-gray-200 hover:text-white transition"
+                  className="text-xs md:text-sm px-3 py-2 rounded-full bg-white/10 hover:bg-white/20 text-gray-200 hover:text-foreground transition"
                 >
                   {s}
                 </button>
@@ -536,7 +536,7 @@ export default function AIAnalysisPage() {
               <DialogTitle>Chat History</DialogTitle>
             </DialogHeader>
             <div className="flex items-center justify-between mb-2">
-              <div className="text-sm text-gray-300">{sessions.length} session{sessions.length===1?'':'s'}</div>
+              <div className="text-sm text-gray-400 dark:text-gray-300">{sessions.length} session{sessions.length===1?'':'s'}</div>
               {sessions.length > 0 && (
                 <button
                   className="text-xs px-2 py-1 rounded bg-white/10 hover:bg-white/20"
@@ -611,7 +611,7 @@ export default function AIAnalysisPage() {
         <div className="flex flex-col gap-4">
           <Card className="border-0 shadow-sm bg-white/5 backdrop-blur-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-white text-base">Coaching suggestions</CardTitle>
+              <CardTitle className="text-foreground text-base">Coaching suggestions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm text-gray-200">
               <button onClick={() => setInputMessage("You are my personal finance coach. My monthly income is RM[amount]. Please create a budget that lets me cover bills, save money, and still have room to enjoy life. Do not tell me to give up happiness.")} className="block text-left w-full p-2 rounded bg-white/10 hover:bg-white/20">Budget that saves but still allows joy</button>

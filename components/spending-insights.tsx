@@ -55,7 +55,7 @@ export function SpendingInsights() {
   return (
     <Card className="border-0 shadow-sm bg-white/5 backdrop-blur-sm h-full">
       <CardHeader className="pb-4">
-        <CardTitle className="text-lg font-semibold text-white">Spending by Category</CardTitle>
+        <CardTitle className="text-lg font-semibold text-foreground">Spending by Category</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {loading ? (
@@ -80,22 +80,22 @@ export function SpendingInsights() {
         categories.map((category, index) => (
           <div key={index} className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-full ${category.color} text-white shadow-lg`}>
+              <div className={`p-2 rounded-full ${category.color} text-foreground shadow-lg`}>
                 <category.icon className="w-4 h-4" />
               </div>
               <div>
-                <p className="font-medium text-white text-sm">{category.name}</p>
-                <p className="text-xs text-gray-300">RM {category.amount.toFixed(2)}</p>
+                <p className="font-medium text-foreground text-sm">{category.name}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-300">RM {category.amount.toFixed(2)}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-16 bg-gray-700 rounded-full h-2">
+              <div className="w-16 bg-gray-400 dark:bg-gray-300 rounded-full h-2">
                 <div 
                   className={`h-2 rounded-full ${category.color}`}
                   style={{ width: `${category.percentage}%` }}
                 ></div>
               </div>
-              <span className="text-xs font-semibold text-gray-300 w-8 text-right">
+              <span className="text-xs font-semibold text-gray-400 dark:text-gray-300 w-8 text-right">
                 {category.percentage}%
               </span>
             </div>
@@ -105,8 +105,8 @@ export function SpendingInsights() {
         
         <div className="pt-4 border-t border-gray-700">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-300">Total Spent</span>
-            <span className="text-sm font-bold text-white">{loading ? <Skeleton className="h-5 w-24" /> : <>RM {total.toFixed(2)}</>}</span>
+            <span className="text-sm font-medium text-gray-400 dark:text-gray-300">Total Spent</span>
+            <span className="text-sm font-bold text-gray-400 dark:text-gray-300">{loading ? <Skeleton className="h-5 w-24" /> : <>RM {total.toFixed(2)}</>}</span>
           </div>
         </div>
       </CardContent>

@@ -173,7 +173,7 @@ function SplitBillGameDemo() {
                 <div className="absolute top-3 right-3 h-6 w-6 rounded-full bg-primary/25" />
                 <div className="absolute inset-0 opacity-30 [background:repeating-linear-gradient(135deg,transparent_0px,transparent_6px,rgba(255,255,255,0.06)_6px,rgba(255,255,255,0.06)_10px)]" />
                 <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-                  <span className="text-sm sm:text-base font-semibold">{name}</span>
+                  <span className="text-sm sm:text-base font-semibold text-foreground">{name}</span>
                   <span className="text-[10px] sm:text-xs text-muted-foreground">FINOVA</span>
                 </div>
               </div>
@@ -249,7 +249,7 @@ export default function Home() {
   }, [router]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen text-foreground">
       {/* Header */}
       <header className="fixed w-full top-0 z-50 bg-transparent backdrop-blur-md ">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

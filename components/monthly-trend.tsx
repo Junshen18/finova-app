@@ -115,10 +115,10 @@ export function MonthlyTrend() {
   const expensePath = toPath(expenseByMonth);
 
   return (
-    <Card className="border-0 shadow-sm bg-white/5 backdrop-blur-sm">
+    <Card className="border-0 shadow-sm bg-white/5 backdrop-blur-sm text-foreground">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold text-white">Income vs Expenses (Last 6 months)</CardTitle>
+          <CardTitle className="text-lg font-semibold">Income vs Expenses (Last 6 months)</CardTitle>
           <div className="flex items-center gap-3 text-xs">
             <div className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-emerald-400" /> Income</div>
             <div className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-red-400" /> Expenses</div>

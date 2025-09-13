@@ -81,9 +81,9 @@ export function OweSummary() {
   }, []);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-foreground">
       <Card className="border-0 shadow-sm bg-white/5 backdrop-blur-sm">
-        <CardHeader className="pb-4"><CardTitle className="text-lg font-semibold text-white">You owe</CardTitle></CardHeader>
+        <CardHeader className="pb-4"><CardTitle className="text-lg font-semibold text-foreground">You owe</CardTitle></CardHeader>
         <CardContent className="space-y-2">
           {loading ? (
             Array.from({ length: 3 }).map((_,i)=> (
@@ -97,14 +97,14 @@ export function OweSummary() {
             ))
           ) : youOwe.length === 0 ? <div className="text-sm text-muted-foreground">You're all settled up.</div> : youOwe.map((r,idx)=> (
             <div key={idx} className="flex items-center justify-between text-sm">
-              <span className="text-gray-300">{r.to}</span>
+              <span className="text-gray-400 dark:text-gray-300">{r.to}</span>
               <span className="text-red-400 font-semibold">RM {r.amount.toFixed(2)}</span>
             </div>
           ))}
         </CardContent>
       </Card>
       <Card className="border-0 shadow-sm bg-white/5 backdrop-blur-sm">
-        <CardHeader className="pb-4"><CardTitle className="text-lg font-semibold text-white">Owe you</CardTitle></CardHeader>
+        <CardHeader className="pb-4"><CardTitle className="text-lg font-semibold text-foreground">Owe you</CardTitle></CardHeader>
         <CardContent className="space-y-2">
           {loading ? (
             Array.from({ length: 3 }).map((_,i)=> (
@@ -118,7 +118,7 @@ export function OweSummary() {
             ))
           ) : oweYou.length === 0 ? <div className="text-sm text-muted-foreground">No one owes you right now.</div> : oweYou.map((r,idx)=> (
             <div key={idx} className="flex items-center justify-between text-sm">
-              <span className="text-gray-300">{r.from}</span>
+              <span className="text-gray-400 dark:text-gray-300">{r.from}</span>
               <span className="text-emerald-400 font-semibold">RM {r.amount.toFixed(2)}</span>
             </div>
           ))}
