@@ -407,10 +407,10 @@ export default function TransactionsPage() {
               </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={filteredTransactions.length === 0}>
+            <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={filteredTransactions.length === 0} className="hidden md:inline-flex">
               CSV
             </Button>
-            <Button variant="outline" size="sm" onClick={handleExportXlsx} disabled={filteredTransactions.length === 0}>
+            <Button variant="outline" size="sm" onClick={handleExportXlsx} disabled={filteredTransactions.length === 0} className="hidden md:inline-flex">
               XLSX
             </Button>
           </div>
@@ -438,14 +438,14 @@ export default function TransactionsPage() {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-3 gap-3 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
           <Card className="border-0 shadow-sm bg-white/5 backdrop-blur-sm">
             <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="hidden md:block text-base text-gray-400">Total Balance</p>
                   <p className="text-[10px] md:hidden text-gray-400">Total (RM)</p>
-                  <p className="text-sm md:text-2xl font-bold text-foreground">{totalBalance.toFixed(2)}</p>
+                  <p className="text-lg md:text-2xl font-bold text-foreground">{totalBalance.toFixed(2)}</p>
                 </div>
                 <div className="md:block hidden p-2 rounded-full bg-blue-500/20">
                   <FaWallet className="w-5 h-5 text-blue-400" />
@@ -460,7 +460,7 @@ export default function TransactionsPage() {
                 <div>
                   <p className="hidden md:block text-base text-gray-400">Total Income</p>
                   <p className="text-[10px] md:hidden text-gray-400">Income (RM)</p>
-                  <p className="text-sm md:text-2xl font-bold text-emerald-400">{totalIncome.toFixed(2)}</p>
+                  <p className="text-lg md:text-2xl font-bold text-emerald-400">{totalIncome.toFixed(2)}</p>
                 </div>
                 <div className="md:block hidden p-2 rounded-full bg-emerald-500/20">
                   <FaArrowDown className="w-5 h-5 text-emerald-400" />
@@ -476,7 +476,7 @@ export default function TransactionsPage() {
                   <p className="hidden md:block text-base text-gray-400">Total Expenses</p>
                   <p className="text-[10px] md:hidden text-gray-400">Expenses (RM)</p>
 
-                  <p className="text-sm md:text-2xl font-bold text-red-400">{totalExpenses.toFixed(2)}</p>
+                  <p className="text-lg md:text-2xl font-bold text-red-400">{totalExpenses.toFixed(2)}</p>
                 </div>
                 <div className="md:block hidden p-2 rounded-full bg-red-500/20">
                   <FaArrowUp className="w-5 h-5 text-red-400" />
@@ -574,7 +574,7 @@ export default function TransactionsPage() {
                           if (swipeStartX == null || swipedRowId !== rowId) return;
                           const dx = e.touches[0].clientX - swipeStartX;
                           if (dx < 0) {
-                            const clamped = Math.max(dx, -120);
+                            const clamped = Math.max(dx, -90);
                             setSwipeOffset(clamped);
                           } else {
                             setSwipeOffset(0);
@@ -584,13 +584,8 @@ export default function TransactionsPage() {
                           if (!isMobile) return;
                           if (swipedRowId !== rowId) return;
                           const thresholdOpen = -60;
-                          const thresholdDelete = -120;
-                          if (swipeOffset <= thresholdDelete + 5) {
-                            await deleteTransaction(transaction.type, transaction.id);
-                            setSwipedRowId(null);
-                            setSwipeOffset(0);
-                            fetchTransactions();
-                          } else if (swipeOffset <= thresholdOpen) {
+                          // Do not auto-delete on swipe; only reveal actions
+                          if (swipeOffset <= thresholdOpen) {
                             setSwipeOffset(-80);
                           } else {
                             setSwipedRowId(null);
@@ -601,14 +596,7 @@ export default function TransactionsPage() {
                           <div key={rowId} className="relative">
                             {/* Actions behind (mobile) */}
                             <div className="absolute inset-y-0 right-0 flex items-center gap-2 pr-2 md:hidden">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => { e.stopPropagation(); setSelectedTransaction({ id: transaction.id, type: transaction.type }); setDialogOpen(true); }}
-                                className="bg-blue-500/10 border-blue-500/40 text-blue-300"
-                              >
-                                Edit
-                              </Button>
+
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -625,25 +613,25 @@ export default function TransactionsPage() {
                               onTouchStart={handleTouchStart}
                               onTouchMove={handleTouchMove}
                               onTouchEnd={handleTouchEnd}
-                              className="flex items-center justify-between p-4 rounded-lg cursor-pointer hover:bg-white/10 transition-all duration-200 border border-white/5 will-change-transform"
+                              className="bg-[#1A191C] flex items-center justify-between p-4 rounded-lg cursor-pointer hover:bg-white/10 transition-all duration-200 border border-white/5 will-change-transform touch-pan-y"
                               style={{ transform: `translateX(${currentOffset}px)` }}
                             >
                               <div className="flex items-center gap-4">
                                 <div className={`p-3 rounded-full ${getTransactionColor(transaction.type)}`}>
                                   {getTransactionIcon(transaction.type)}
                                 </div>
-                                <div className="flex flex-col">
-                                  <p className="font-medium text-foreground">{transaction.title}</p>
+                                <div className="flex flex-col min-w-0">
+                                  <p className="font-medium text-foreground truncate max-w-[55vw] md:max-w-none">{transaction.title}</p>
                                   {transaction.category && transaction.category !== transaction.title && (
-                                    <p className="text-sm text-gray-300">{transaction.category}</p>
+                                    <p className="text-sm text-gray-300 truncate max-w-[55vw] md:max-w-none">{transaction.category}</p>
                                   )}
                                   {transaction.description && transaction.description !== transaction.title && (
-                                    <p className="text-xs text-gray-400 mt-1">{transaction.description}</p>
+                                    <p className="text-xs text-gray-400 mt-1 truncate max-w-[55vw] md:max-w-none">{transaction.description}</p>
                                   )}
                                 </div>
                               </div>
                               <div className="text-right">
-                                <p className={`font-semibold text-lg ${
+                                <p className={`font-semibold text-base md:text-lg ${
                                   transaction.type === 'income' ? 'text-emerald-400' : 
                                   transaction.type === 'expense' ? 'text-red-400' : 'text-blue-400'
                                 }`}>

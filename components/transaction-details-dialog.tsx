@@ -28,6 +28,7 @@ type ExpenseRow = {
   category: number | null;
   account_id: number | null;
   description: string | null;
+  img_url: string | null;
 };
 
 type IncomeRow = {
@@ -113,7 +114,7 @@ export function TransactionDetailsDialog({ open, transaction, onOpenChange, onUp
         if (transaction.type === "expense") {
           const { data } = await supabase
             .from("expense_transactions")
-            .select("id, date, amount, category, account_id, description")
+            .select("id, date, amount, category, account_id, description, img_url")
             .eq("id", transaction.id)
             .single();
           if (data) { setExpense(data as ExpenseRow); setInitialExpense(data as ExpenseRow); }
@@ -349,6 +350,25 @@ export function TransactionDetailsDialog({ open, transaction, onOpenChange, onUp
                       <div className="text-sm text-muted-foreground max-w-md leading-relaxed">{desc}</div>
                     ) : null;
                   })()}
+
+                  {/* Receipt preview (expense only) */}
+                  {transaction.type === "expense" && expense?.img_url ? (
+                    <div className="w-full max-w-md mt-2">
+                      <div className="text-xs text-muted-foreground mb-1 text-left">Receipt</div>
+                      <a
+                        href={expense.img_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block rounded-lg overflow-hidden border border-form-border bg-form-bg hover:bg-form-hover"
+                      >
+                        <img
+                          src={expense.img_url}
+                          alt="Receipt"
+                          className="w-full max-h-64 object-contain bg-black/5"
+                        />
+                      </a>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="flex items-center justify-end gap-2 pt-2">
