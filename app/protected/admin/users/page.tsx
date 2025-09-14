@@ -195,7 +195,7 @@ export default function AdminUsersPage() {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-        <h1 className="text-2xl font-bold">Users</h1>
+        <h1 className="text-2xl font-bold">Users Management</h1>
         <div className="flex items-center gap-2 ml-auto">
           <Input
             placeholder="Search name or email"
