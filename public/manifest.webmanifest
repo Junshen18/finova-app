@@ -1,0 +1,24 @@
+{
+  "name": "Finova - Personal Finance Tracker",
+  "short_name": "Finova",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#111827",
+  "description": "Track your expenses, manage your budget, and achieve your financial goals.",
+  "icons": [
+    {
+      "src": "/Finova.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/Finova.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+

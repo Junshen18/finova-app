@@ -5,6 +5,7 @@ import "@radix-ui/themes/styles.css";
 import "./globals.css";
 import { Toaster } from "sonner";
 import localFont from "next/font/local";
+import RegisterSW from "@/components/register-sw";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,6 +26,13 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Finova - Personal Finance Tracker",
   description: "Track your expenses, manage your budget, and achieve your financial goals",
+  themeColor: "#111827",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/finova-logo.svg",
+    apple: "/Finova.png",
+    shortcut: "/Finova.png"
+  }
 };
 
 export default function RootLayout({
@@ -41,6 +49,7 @@ export default function RootLayout({
           {children}
         </ThemeProvider>
         <Toaster />
+        <RegisterSW />
       </body>
     </html>
   );
