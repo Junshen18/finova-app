@@ -29,9 +29,9 @@ export const metadata: Metadata = {
   themeColor: "#111827",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/finova-logo.svg",
-    apple: "/Finova.png",
-    shortcut: "/Finova.png"
+    icon: "/icon.png",
+    apple: "/icon.png",
+    shortcut: "/icon.png"
   }
 };
 
