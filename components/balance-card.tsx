@@ -62,13 +62,13 @@ export default function BalanceCard() {
             className="text-sm font-semibold opacity-90 flex flex-row items-center gap-1 cursor-pointer select-none text-black hover:opacity-100 transition-opacity"
           >
             {loading ? <Skeleton className="h-3 w-24" /> : <>Total Balance</>} {" "}
-            <FaAngleUp
+            {/* <FaAngleUp
               className={`text-base ${
                 isOpen ? "rotate-180" : ""
               } transition-all duration-300`}
-            />
+            /> */}
           </div>
-          <FaEllipsis className="text-black/70 text-base cursor-pointer hover:text-black transition-colors" />
+          {/* <FaEllipsis className="text-black/70 text-base cursor-pointer hover:text-black transition-colors" /> */}
         </div>
         {/* Balance */}
         <div className="text-3xl font-black text-black tracking-tight">

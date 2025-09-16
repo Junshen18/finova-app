@@ -8,6 +8,16 @@ import Link from "next/link";
 
 type Tx = { id: number; title: string; amount: number; category: string; date: string; type: "income"|"expense"|"transfer" };
 
+const formatDate = (iso: string) => {
+  try {
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return iso;
+    return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+  } catch {
+    return iso;
+  }
+};
+
 export function RecentTransactions() {
   const [transactions, setTransactions] = useState<Tx[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,7 +129,7 @@ export function RecentTransactions() {
               }`}>
                 {transaction.type === 'income' ? '+' : transaction.type === 'expense' ? '-' : ''}RM {Math.abs(transaction.amount).toFixed(2)}
               </p>
-              <p className="text-[10px] text-gray-400">{transaction.date}</p>
+              <p className="text-[10px] text-gray-400">{formatDate(transaction.date)}</p>
             </div>
           </div>
         ))

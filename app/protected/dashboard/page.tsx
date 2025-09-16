@@ -59,7 +59,7 @@ export default async function DashboardPage() {
                             </Link>
                             <Link href="/protected/transactions" className="flex flex-col items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-900 py-4 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition">
                               <BarChart3 className="w-5 h-5 mb-1" />
-                              <span className="text-sm font-medium">Cash Flow</span>
+                              <span className="text-sm font-medium">Transactions</span>
                             </Link>
                             <Link href="/protected/accounts" className="flex flex-col items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-900 py-4 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition">
                               <Wallet className="w-5 h-5 mb-1" />
