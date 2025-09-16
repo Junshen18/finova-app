@@ -74,7 +74,7 @@ export function AddTransactionDrawer({ open, onClose }: { open: boolean, onClose
   // Modal for desktop/tablet
   return (
     <Dialog open={drawerOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[85vh] bg-background border-border">
+      <DialogContent className="max-w-2xl max-h-[85vh] bg-background border-border overflow-y-auto overscroll-contain">
         <DialogHeader className="">
           <div className="flex items-center justify-between mb-4">
             <DialogTitle className="text-xl font-bold text-foreground">Add Transaction</DialogTitle>
