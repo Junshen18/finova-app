@@ -24,9 +24,9 @@ export default function Page() {
       <div className="absolute bottom-10 flex gap-2 mt-8 text-xs text-gray-400">
           <a href="#" className="hover:underline">Developers</a>
           <span>·</span>
-          <a href="#" className="hover:underline">Privacy</a>
+          <Link href="/privacy" className="hover:underline">Privacy</Link>
           <span>·</span>
-          <a href="#" className="hover:underline">Terms</a>
+          <Link href="/terms" className="hover:underline">Terms</Link>
         </div>
     </div>
   );
