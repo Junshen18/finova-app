@@ -271,11 +271,42 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
     text: string;
     averageConfidence: number | null;
   }> {
-    const result = await Tesseract.recognize(dataUrl, "eng", {
-      logger: () => {},
-    });
-    const averageConfidence = (result as any)?.data?.confidence ?? null;
-    return { text: (result as any).data?.text || "", averageConfidence };
+    try {
+      const result = await Tesseract.recognize(dataUrl, "eng", {
+        logger: () => {},
+      });
+      const averageConfidence = (result as any)?.data?.confidence ?? null;
+      return { text: (result as any).data?.text || "", averageConfidence };
+    } catch (e) {
+      return { text: "", averageConfidence: null };
+    }
+  }
+
+  
+
+  async function parseOcrText(text: string): Promise<{
+    merchant?: string;
+    amount?: number | null;
+    date?: string;
+    notes?: string;
+  } | null> {
+    try {
+      const res = await fetch("/api/ocr/parse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error("Parse OCR failed", err);
+        return null;
+      }
+      const data = await res.json();
+      return data?.expense || null;
+    } catch (e) {
+      console.error("Parse OCR error", e);
+      return null;
+    }
   }
 
   function extractTotalAmountFromText(text: string): string {
@@ -363,10 +394,34 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
     }
     try {
       setOcrLoading(true);
-      const { text, averageConfidence } = await runOcrOnImage(receiptImage);
-      const merchantName = extractMerchantNameFromText(text);
-      const totalAmount = extractTotalAmountFromText(text);
-      const transactionDate = extractDateFromText(text);
+      let { text, averageConfidence } = await runOcrOnImage(receiptImage);
+
+      
+
+      if (!text || text.trim().length === 0) {
+        throw new Error("OCR returned no text");
+      }
+
+      // Try Gemini parse first
+      let parsed = await parseOcrText(text);
+
+      let merchantName = parsed?.merchant || extractMerchantNameFromText(text);
+      let totalAmount = "";
+      if (parsed?.amount != null && !Number.isNaN(parsed.amount)) {
+        const n = Number(parsed.amount);
+        totalAmount = (Math.round(n * 100) % 100 === 0) ? String(Math.round(n)) : n.toFixed(2);
+      } else {
+        totalAmount = extractTotalAmountFromText(text);
+      }
+
+      let transactionDate: Date | null = null;
+      if (parsed?.date && typeof parsed.date === "string") {
+        const d = new Date(parsed.date);
+        if (!Number.isNaN(d.getTime())) transactionDate = d;
+      }
+      if (!transactionDate) {
+        transactionDate = extractDateFromText(text);
+      }
 
       setOcrSuggestion({
         merchantName,
@@ -378,7 +433,7 @@ export function AddExpenseForm({ onCancel }: AddExpenseFormProps) {
       setOcrDialogOpen(true);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to extract text from receipt.");
+      toast.error("Failed to extract details. Try a clearer photo or different receipt.");
     } finally {
       setOcrLoading(false);
     }
