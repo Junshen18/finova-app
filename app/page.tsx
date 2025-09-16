@@ -8,6 +8,17 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { motion, animate } from "framer-motion";
 import SplitBillGame from "@/components/split-bill-game";
+import {
+  TrendingUp,
+  Users,
+  Bot,
+  Wallet,
+  Clipboard,
+  BarChart3,
+  MonitorSmartphone,
+  Receipt,
+  Tags,
+} from "lucide-react";
 
 function AnimatedNumber({ value, duration = 2 }: { value: number; duration?: number }) {
   const [displayValue, setDisplayValue] = useState(0);
@@ -92,18 +103,7 @@ export default function Home() {
         {/* Hero Section */}
         <section className="bg-background py-2 h-[550px] overflow-hidden">
           <div className="w-full h-full mx-auto px-4 sm:px-6 lg:px-8 relative flex items-center justify-center">
-            <motion.div
-              aria-hidden
-              className="absolute -top-16 -right-24 h-64 w-64 rounded-full bg-primary/20 blur-3xl"
-              animate={{ y: [0, -12, 0] }}
-              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            />
-            <motion.div
-              aria-hidden
-              className="absolute -bottom-20 -left-16 h-72 w-72 rounded-full bg-primary/10 blur-3xl"
-              animate={{ y: [0, 12, 0] }}
-              transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-            />
+
             <Image src="/fimi.svg" alt="Fimi" width={300} height={280} className="w-[190px] h-[180px] md:w-[300px] md:h-[280px] absolute top-5 md:top-10 left-[50%] -translate-x-1/2 object-cover z-0" />
             <Image src="/herobg.svg" alt="Hero Background" fill className="hidden md:block absolute top-0 object-cover z-0" />
             <div className="pt-[50px] md:pt-[230px] text-center z-10 flex flex-col items-center justify-center gap-3">
@@ -150,14 +150,17 @@ export default function Home() {
                 {
                   title: "Track Expenses Effortlessly",
                   desc: "Capture spending in seconds. Auto-categorize and keep everything organized.",
+                  icon: <TrendingUp className="h-6 w-6" />,
                 },
                 {
                   title: "Split Bills with Friends",
                   desc: "Create groups, settle up, and see who owes what—no spreadsheets needed.",
+                  icon: <Users className="h-6 w-6" />,
                 },
                 {
                   title: "AI-Powered Insights",
                   desc: "Understand trends, get alerts, and optimize your budget automatically.",
+                  icon: <Bot className="h-6 w-6" />,
                 },
               ].map((f, i) => (
                 <motion.div
@@ -169,7 +172,7 @@ export default function Home() {
                   transition={{ delay: i * 0.1, duration: 0.5, ease: "easeOut" }}
                 >
                   <div className="h-12 w-12 rounded-md bg-primary/15 text-primary flex items-center justify-center">
-                    <span className="text-lg font-bold">{i + 1}</span>
+                    {f.icon}
                   </div>
                   <h3 className="mt-6 text-xl font-semibold text-foreground text-center">
                     {f.title}
@@ -198,16 +201,19 @@ export default function Home() {
                   step: "1",
                   title: "Connect accounts",
                   desc: "Bring in your transactions or add them manually—your data, your control.",
+                  icon: <Wallet className="h-5 w-5 text-primary" />,
                 },
                 {
                   step: "2",
                   title: "Track & split",
                   desc: "Categorize spending, split with friends, and settle balances in-app.",
+                  icon: <Clipboard className="h-5 w-5 text-primary" />,
                 },
                 {
                   step: "3",
                   title: "Get insights",
                   desc: "See trends, forecasts, and suggestions powered by AI analysis.",
+                  icon: <BarChart3 className="h-5 w-5 text-primary" />,
                 },
               ].map((s, i) => (
                 <motion.div
@@ -222,7 +228,7 @@ export default function Home() {
                     <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-semibold">
                       {s.step}
                     </div>
-                    <h3 className="text-lg font-semibold">{s.title}</h3>
+                    <h3 className="text-lg font-semibold flex items-center gap-2">{s.icon}{s.title}</h3>
                   </div>
                   <p className="mt-3 text-muted-foreground">{s.desc}</p>
                 </motion.div>
@@ -236,18 +242,30 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 rounded-2xl border p-8 bg-card/30 backdrop-blur-sm text-center">
               <div>
+                <div className="mx-auto mb-2 h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                  <Receipt className="h-5 w-5" />
+                </div>
                 <div className="text-3xl font-bold"><AnimatedNumber value={12000} /></div>
                 <p className="text-muted-foreground mt-1">Transactions Tracked</p>
               </div>
               <div>
+                <div className="mx-auto mb-2 h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                  <Users className="h-5 w-5" />
+                </div>
                 <div className="text-3xl font-bold"><AnimatedNumber value={850} /></div>
                 <p className="text-muted-foreground mt-1">Active Groups</p>
               </div>
               <div>
+                <div className="mx-auto mb-2 h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                  <Tags className="h-5 w-5" />
+                </div>
                 <div className="text-3xl font-bold"><AnimatedNumber value={98} /></div>
                 <p className="text-muted-foreground mt-1">Categories Covered</p>
               </div>
               <div>
+                <div className="mx-auto mb-2 h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                  <MonitorSmartphone className="h-5 w-5" />
+                </div>
                 <div className="text-3xl font-bold"><AnimatedNumber value={4} /></div>
                 <p className="text-muted-foreground mt-1">Platforms Supported</p>
               </div>
