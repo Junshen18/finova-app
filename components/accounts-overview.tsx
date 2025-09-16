@@ -4,12 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil, Plus, Trash } from "lucide-react";
 import { Input } from "./ui/input";
 
 type Account = { id: number; name: string; is_default?: boolean };
 
-export default function AccountsOverview() {
+type AccountsOverviewProps = {
+  onRequestDelete?: (account: { id: number; name: string }) => void;
+};
+
+export default function AccountsOverview({ onRequestDelete }: AccountsOverviewProps) {
   const supabase = useMemo(() => createClient(), []);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [balances, setBalances] = useState<Record<number, number>>({});
@@ -133,7 +137,18 @@ export default function AccountsOverview() {
             <>
               <span className="text-sm text-foreground">{acc.name}</span>
               {!acc.is_default && (
-                <Button variant="outline" size="icon" onClick={()=>{setRenamingId(acc.id); setRenameValue(acc.name);}} className="h-7 w-7 ml-2 bg-form-bg text-foreground border-form-border hover:bg-form-hover"><Pencil className="w-3.5 h-3.5" /></Button>
+                <>
+                  <Button variant="outline" size="icon" onClick={()=>{setRenamingId(acc.id); setRenameValue(acc.name);}} className="h-7 w-7 ml-2 bg-form-bg text-foreground border-form-border hover:bg-form-hover"><Pencil className="w-3.5 h-3.5" /></Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={()=> onRequestDelete?.({ id: acc.id, name: acc.name })}
+                    className="h-7 w-7 ml-1 bg-form-bg text-foreground border-form-border hover:bg-form-hover"
+                    aria-label={`Delete ${acc.name}`}
+                  >
+                    <Trash className="w-3.5 h-3.5" />
+                  </Button>
+                </>
               )}
             </>
           )}
