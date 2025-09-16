@@ -3,6 +3,9 @@
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -18,6 +21,7 @@ export function SignUpForm({
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [emailValid, setEmailValid] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const router = useRouter();
 
   function validateEmail(emailToValidate: string) {
@@ -29,6 +33,13 @@ export function SignUpForm({
     const supabase = createClient();
     setIsLoading(true);
     setError(null);
+
+    if (!acceptedTerms) {
+      setError("You must accept the Terms and Privacy Policy");
+      toast.error("Please accept the Terms and Privacy Policy");
+      setIsLoading(false);
+      return;
+    }
 
     if (!username.trim()) {
       setError("Please enter a profile name");
@@ -110,13 +121,28 @@ export function SignUpForm({
             className="w-full mb-4 h-12 px-4 py-3 rounded-xl font-medium bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 text-gray-800 placeholder-gray-300 transition"
           />
 
+          <div className="flex gap-3 mb-4 text-sm text-gray-600 items-center justify-center">
+            <Checkbox
+              id="accept"
+              checked={acceptedTerms}
+              onCheckedChange={(checked) => setAcceptedTerms(!!checked)}
+              className="mt-1"
+            />
+            <Label htmlFor="accept" className="text-gray-600  translate-y-0.5">
+              I agree to the {" "}
+              <Link href="/terms" className="underline underline-offset-4 hover:opacity-80">Terms of Service</Link>
+              {" "} and {" "}
+              <Link href="/privacy" className="underline underline-offset-4 hover:opacity-80">Privacy Policy</Link>.
+            </Label>
+          </div>
+
           {/* Errors displayed via toast */}
 
           {emailValid && username.trim() && password && repeatPassword && password === repeatPassword ? (
             <Button
               type="submit"
               className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-3 font-semibold transition cursor-pointer"
-              disabled={isLoading}
+              disabled={isLoading || !acceptedTerms}
             >
               {isLoading ? "Creating an account..." : "Sign up"}
             </Button>
