@@ -24,7 +24,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Finova - Personal Finance Tracker",
+  title: "Finova",
   description: "Track your expenses, manage your budget, and achieve your financial goals",
   themeColor: "#111827",
   manifest: "/manifest.webmanifest",

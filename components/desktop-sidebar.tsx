@@ -126,7 +126,7 @@ export function DesktopSidebar({ profile }: { profile: any }) {
           </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-foreground">{profile?.display_name || 'User'}</p>
-              <p className="text-xs text-gray-400 dark:text-gray-300">Premium Member</p>
+              <p className="text-xs text-gray-400 dark:text-gray-300">{profile?.role === 'admin' ? 'Admin' : 'User'}</p>
             </div>
           </button>
         </DropdownMenuTrigger>
