@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { EllipsisHorizontalIcon, CheckBadgeIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { EllipsisHorizontalIcon, CheckBadgeIcon, ArrowLeftIcon, UserPlusIcon, PencilSquareIcon, TrashIcon, DocumentCurrencyDollarIcon } from "@heroicons/react/24/outline";
 import { ArrowUpCircle, Pencil } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -74,6 +74,12 @@ export default function GroupDetailPage() {
   const [settleAmount, setSettleAmount] = useState<string>("");
   const [settleNote, setSettleNote] = useState<string>("");
   const [authorized, setAuthorized] = useState<boolean | null>(null);
+
+  // owner: rename/delete group modals
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
 
   // Helper: fetch group expenses visible to current user via RPC with fallback
   const fetchGroupExpenses = async (supabase: ReturnType<typeof createClient>, groupId: number) => {
@@ -461,6 +467,64 @@ export default function GroupDetailPage() {
     }
   };
 
+  const handleRenameGroup = async () => {
+    try {
+      if (!isOwner) return;
+      const trimmed = (renameValue || "").trim();
+      if (!trimmed) {
+        toast.error("Enter a group name");
+        return;
+      }
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("split_groups")
+        .update({ name: trimmed })
+        .eq("id", groupId);
+      if (error) throw error;
+      setGroupName(trimmed);
+      setRenameOpen(false);
+      toast.success("Group renamed");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to rename group");
+    }
+  };
+
+  const handleDeleteGroup = async () => {
+    try {
+      if (!isOwner) return;
+      if ((deleteConfirm || "").trim() !== (groupName || "").trim()) {
+        toast.error("Type the exact group name to confirm");
+        return;
+      }
+      const supabase = createClient();
+
+      // gather expense ids in this group
+      const { data: expIdsRows } = await supabase
+        .from("expense_transactions")
+        .select("id")
+        .eq("group_id", groupId);
+      const expenseIds = (expIdsRows || []).map((r: any) => r.id);
+
+      // delete dependent rows first
+      if (expenseIds.length > 0) {
+        await supabase.from("expense_splits").delete().in("expense_id", expenseIds);
+        await supabase.from("expense_transactions").delete().in("id", expenseIds);
+      }
+      await supabase.from("split_settlements").delete().eq("group_id", groupId);
+      await supabase.from("split_group_member").delete().eq("group_id", groupId);
+
+      // delete the group itself
+      const { error: gErr } = await supabase.from("split_groups").delete().eq("id", groupId);
+      if (gErr) throw gErr;
+
+      toast.success("Group deleted");
+      setDeleteOpen(false);
+      router.replace("/protected/groups");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete group");
+    }
+  };
+
   const openAddMembers = async () => {
     try {
       setSelected({});
@@ -591,13 +655,54 @@ export default function GroupDetailPage() {
         <div className="flex flex-col gap-4">
           <div className="bg-white/5 border border-white/10 rounded-xl p-4">
             <h2 className="text-sm font-semibold mb-3">Quick Actions</h2>
-        <div className="flex gap-2">
-          {isOwner && (
-            <Button variant="outline" className="bg-white/10 border-white/20 text-foreground hover:bg-white/20" onClick={openAddMembers}>Add members</Button>
-          )}
-          <Button onClick={() => setBillOpen(true)} className="bg-[#E9FE52] text-black hover:bg-[#E9FE52]/90">Add Bill</Button>
-        </div>
-      </div>
+            <div className="flex items-center gap-2">
+              {isOwner && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="bg-white/10 border-white/20 text-foreground hover:bg-white/20"
+                  onClick={openAddMembers}
+                  aria-label="Add members"
+                  title="Add members"
+                >
+                  <UserPlusIcon className="h-5 w-5" />
+                </Button>
+              )}
+              {isOwner && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="bg-white/10 border-white/20 text-foreground hover:bg-white/20"
+                  onClick={() => { setRenameValue(groupName || ""); setRenameOpen(true); }}
+                  aria-label="Rename Group"
+                  title="Rename Group"
+                >
+                  <PencilSquareIcon className="h-5 w-5" />
+                </Button>
+              )}
+              {isOwner && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/15"
+                  onClick={() => { setDeleteConfirm(""); setDeleteOpen(true); }}
+                  aria-label="Delete Group"
+                  title="Delete Group"
+                >
+                  <TrashIcon className="h-5 w-5" />
+                </Button>
+              )}
+              <Button
+                size="icon"
+                onClick={() => setBillOpen(true)}
+                className="bg-[#E9FE52] text-black hover:bg-[#E9FE52]/90"
+                aria-label="Add Bill"
+                title="Add Bill"
+              >
+                <DocumentCurrencyDollarIcon className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
 
           {/* You owe section */}
           <div className="bg-white/5 border border-white/10 rounded-xl p-4">
@@ -1150,6 +1255,41 @@ export default function GroupDetailPage() {
             )}
           </div>
           <Button onClick={handleAddMembers} className="w-full bg-[#E9FE52] text-black hover:bg-[#E9FE52]/90">Add Selected</Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rename Group */}
+      <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
+        <DialogContent className="bg-form-bg border-form-border max-w-md">
+          <DialogTitle className="text-foreground">Rename Group</DialogTitle>
+          <div className="space-y-3">
+            <div>
+              <span className="text-sm block mb-1">New name</span>
+              <Input value={renameValue} onChange={(e)=>setRenameValue(e.target.value)} className="bg-form-bg text-foreground border-form-border" />
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              <Button variant="outline" onClick={()=>setRenameOpen(false)} className="bg-form-bg text-foreground border-form-border hover:bg-form-hover">Cancel</Button>
+              <Button onClick={handleRenameGroup} className="bg-[#E9FE52] text-black hover:bg-[#E9FE52]/90">Save</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Group */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="bg-form-bg border-form-border max-w-md">
+          <DialogTitle className="text-foreground">Delete Group</DialogTitle>
+          <div className="space-y-3 text-sm">
+            <p className="text-muted-foreground">This will permanently delete the group and related data (memberships, group expenses, splits, and settlements). This action cannot be undone.</p>
+            <div>
+              <span className="block mb-1">Type the group name to confirm</span>
+              <Input value={deleteConfirm} onChange={(e)=>setDeleteConfirm(e.target.value)} placeholder={groupName || "Group name"} className="bg-form-bg text-foreground border-form-border" />
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              <Button variant="outline" onClick={()=>setDeleteOpen(false)} className="bg-form-bg text-foreground border-form-border hover:bg-form-hover">Cancel</Button>
+              <Button onClick={handleDeleteGroup} className="bg-red-500 text-white hover:bg-red-600">Delete</Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
